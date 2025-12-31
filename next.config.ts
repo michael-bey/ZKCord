@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ["@zkpassport/sdk", "@aztec/bb.js"],
+  transpilePackages: ["buffer"],
 };
 
 export default nextConfig;
