@@ -4,13 +4,21 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
+import { QRCodeSVG } from 'qrcode.react';
+
 function VerifyContent() {
     const searchParams = useSearchParams();
     const nonce = searchParams.get('nonce');
-    const [status, setStatus] = useState<'loading' | 'ready' | 'verifying' | 'success' | 'error'>('loading');
+    const [status, setStatus] = useState<'loading' | 'ready' | 'verifying' | 'success' | 'error' | 'scanned' | 'generating'>('loading');
     const [error, setError] = useState<string | null>(null);
+    const [verifyUrl, setVerifyUrl] = useState<string | null>(null);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
+        // Simple mobile detection
+        const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        setIsMobile(mobile);
+
         if (!nonce) {
             setStatus('error');
             setError('Missing verification nonce. Please return to Discord and run /verify again.');
@@ -23,17 +31,34 @@ function VerifyContent() {
                 const zkPassport = new ZKPassport();
                 const queryBuilder = await zkPassport.request({
                     name: 'ZKCord',
-                    logo: 'https://zkcord.vercel.app/logo.png', // Replace with actual production URL
+                    logo: 'https://zkcord.vercel.app/logo.png',
                     purpose: 'Securely verify your age and nationality to access exclusive Discord channels.',
                     scope: 'zkcord-verification',
                     devMode: true,
                 });
 
-                const { url, onResult, onError } = queryBuilder
+                const { url, onResult, onError, onRequestReceived, onGeneratingProof, onBridgeConnect } = queryBuilder
                     .gte('age', 18)
                     .disclose('firstname')
                     .disclose('nationality')
                     .done();
+
+                setVerifyUrl(url);
+                setStatus('ready');
+
+                onBridgeConnect(() => {
+                    console.log('Bridge connected');
+                });
+
+                onRequestReceived(() => {
+                    console.log('Request received (Scanned)');
+                    setStatus('scanned');
+                });
+
+                onGeneratingProof(() => {
+                    console.log('Generating proof...');
+                    setStatus('generating');
+                });
 
                 onResult(async ({ verified, result, uniqueIdentifier }) => {
                     if (verified) {
@@ -71,13 +96,15 @@ function VerifyContent() {
                 onError((err) => {
                     console.error('ZkPassport Error:', err);
                     setStatus('error');
-                    setError('An error occurred while communicating with ZK Passport.');
+                    setError(typeof err === 'string' ? err : 'An error occurred while communicating with ZK Passport.');
                 });
 
-                // Automatic redirect after a brief delay if in loading state
-                setTimeout(() => {
-                    window.location.href = url;
-                }, 1500);
+                // On mobile, auto-redirect to app
+                if (mobile) {
+                    setTimeout(() => {
+                        window.location.href = url;
+                    }, 1000);
+                }
 
             } catch (err) {
                 console.error('Initialization Error:', err);
@@ -95,22 +122,82 @@ function VerifyContent() {
                 <Image src="/logo.png" alt="ZKCord" width={80} height={80} className="logo" />
             </div>
 
-            <h1>Verification Flow</h1>
-
             <div className="status-box">
                 {status === 'loading' && (
                     <div className="loading-state">
                         <div className="spinner"></div>
-                        <p>Starting ZK Passport...</p>
-                        <span>You will be redirected to the app automatically.</span>
+                        <p>Initializing...</p>
+                    </div>
+                )}
+
+                {status === 'ready' && (
+                    <div className="ready-state animate-slide-up">
+                        {isMobile ? (
+                            <>
+                                <h1>Verification Flow</h1>
+                                <div className="spinner"></div>
+                                <p>Starting ZK Passport...</p>
+                                <span>Redirecting you to the app.</span>
+                                <div className="actions">
+                                    <a href={verifyUrl!} className="btn-primary">Open App Manually</a>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <h1>Verify with ZK Passport</h1>
+                                <p className="subtitle">Scan the QR code below with your phone to prove your age and nationality privately.</p>
+                                <div className="qr-container">
+                                    {verifyUrl && (
+                                        <QRCodeSVG
+                                            value={verifyUrl}
+                                            size={200}
+                                            level="L"
+                                            includeMargin={false}
+                                            className="qr-code"
+                                            style={{ borderRadius: '8px' }}
+                                        />
+                                    )}
+                                </div>
+                                <div className="steps">
+                                    <div className="step">
+                                        <span className="step-num">1</span>
+                                        <p>Open <b>ZKPassport</b> app</p>
+                                    </div>
+                                    <div className="step">
+                                        <span className="step-num">2</span>
+                                        <p>Scan the code above</p>
+                                    </div>
+                                    <div className="step">
+                                        <span className="step-num">3</span>
+                                        <p>Verify privately</p>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {status === 'scanned' && (
+                    <div className="loading-state animate-pulse">
+                        <div className="icon">📱</div>
+                        <p>Request Scanned!</p>
+                        <span>Follow instructions on your phone.</span>
+                    </div>
+                )}
+
+                {status === 'generating' && (
+                    <div className="loading-state">
+                        <div className="spinner pulse"></div>
+                        <p>Generating Proof...</p>
+                        <span>This stays on your device.</span>
                     </div>
                 )}
 
                 {status === 'verifying' && (
                     <div className="loading-state">
                         <div className="spinner pulse"></div>
-                        <p>Securing your identity...</p>
-                        <span>Finalizing roles with Discord.</span>
+                        <p>Finalizing Verification...</p>
+                        <span>Updating your Discord roles.</span>
                     </div>
                 )}
 
@@ -141,10 +228,10 @@ function VerifyContent() {
                     justify-content: center;
                     max-width: 500px;
                     width: 90%;
-                    margin: 10vh auto;
+                    margin: 8vh auto;
                     padding: 3rem;
                     text-align: center;
-                    min-height: 400px;
+                    min-height: 500px;
                 }
 
                 .logo-section {
@@ -154,13 +241,61 @@ function VerifyContent() {
 
                 h1 {
                     font-size: 1.8rem;
-                    margin-bottom: 2rem;
+                    margin-bottom: 0.5rem;
                     font-weight: 700;
                     letter-spacing: -0.01em;
                 }
 
+                .subtitle {
+                    color: rgba(255, 255, 255, 0.6);
+                    font-size: 0.95rem;
+                    line-height: 1.5;
+                    margin-bottom: 2rem;
+                }
+
                 .status-box {
                     width: 100%;
+                }
+
+                .qr-container {
+                    background: white;
+                    padding: 1rem;
+                    border-radius: 16px;
+                    display: inline-block;
+                    margin-bottom: 2rem;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                }
+
+                .steps {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 1rem;
+                    margin-top: 1rem;
+                }
+
+                .step {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+
+                .step-num {
+                    width: 24px;
+                    height: 24px;
+                    background: var(--accent);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    margin-bottom: 0.5rem;
+                }
+
+                .step p {
+                    font-size: 0.8rem;
+                    color: rgba(255, 255, 255, 0.5);
                 }
 
                 .loading-state p {
@@ -193,28 +328,27 @@ function VerifyContent() {
                     margin-bottom: 1rem;
                 }
 
-                .success-message h2 { color: #4ade80; margin-bottom: 1rem; }
-                .error-message h2 { color: #f87171; margin-bottom: 1rem; }
-
-                .success-message p, .error-message p {
-                    color: rgba(255, 255, 255, 0.7);
-                    line-height: 1.6;
-                    margin-bottom: 2rem;
+                .actions {
+                    margin-top: 2rem;
                 }
 
-                .btn-close, .btn-retry {
+                .btn-primary, .btn-close, .btn-retry {
+                    display: inline-block;
                     background: var(--accent);
                     color: white;
                     border: none;
+                    text-decoration: none;
                     padding: 0.8rem 2rem;
                     border-radius: 50px;
                     font-weight: 600;
                     cursor: pointer;
-                    transition: transform 0.2s;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
                 }
 
-                .btn-close:hover, .btn-retry:hover {
+                .btn-primary:hover, .btn-close:hover, .btn-retry:hover {
                     transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
                 }
 
                 @keyframes spin {
@@ -232,8 +366,14 @@ function VerifyContent() {
                     to { transform: translateY(0); opacity: 1; }
                 }
 
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+
                 .animate-slide-up { animation: slideUp 0.5s ease-out forwards; }
                 .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+                .animate-pulse { animation: pulse 2s infinite; }
             `}</style>
         </div>
     );
