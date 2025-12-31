@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
         return new NextResponse('Missing signature headers or public key', { status: 401 });
     }
 
-    const isValidRequest = verifyKey(body, signature, timestamp, DISCORD_PUBLIC_KEY);
+    const isValidRequest = await verifyKey(body, signature, timestamp, DISCORD_PUBLIC_KEY);
     if (!isValidRequest) {
         console.error('❌ Invalid request signature');
         return new NextResponse('Invalid request signature', { status: 401 });
