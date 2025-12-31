@@ -34,10 +34,10 @@ function VerifyContent() {
                     logo: 'https://zkcord.vercel.app/logo.png',
                     purpose: 'Securely verify your age and nationality to access exclusive Discord channels.',
                     scope: 'zkcord-verification',
-                    devMode: true,
+                    devMode: false,
                 });
 
-                const { url, onResult, onError, onRequestReceived, onGeneratingProof, onBridgeConnect } = queryBuilder
+                const { url, onResult, onError, onRequestReceived, onGeneratingProof, onBridgeConnect, onReject, onProofGenerated } = queryBuilder
                     .gte('age', 18)
                     .disclose('firstname')
                     .disclose('nationality')
@@ -47,20 +47,31 @@ function VerifyContent() {
                 setStatus('ready');
 
                 onBridgeConnect(() => {
-                    console.log('Bridge connected');
+                    console.log('✅ Bridge connected');
                 });
 
                 onRequestReceived(() => {
-                    console.log('Request received (Scanned)');
+                    console.log('📱 Request received (Scanned)');
                     setStatus('scanned');
                 });
 
                 onGeneratingProof(() => {
-                    console.log('Generating proof...');
+                    console.log('⚙️ Generating proof...');
                     setStatus('generating');
                 });
 
+                onProofGenerated((proof) => {
+                    console.log('🗳️ Proof generated', proof);
+                });
+
+                onReject(() => {
+                    console.log('❌ Request rejected');
+                    setStatus('error');
+                    setError('The verification request was rejected in your mobile app.');
+                });
+
                 onResult(async ({ verified, result, uniqueIdentifier }) => {
+                    console.log('🏁 Result received:', { verified, uniqueIdentifier });
                     if (verified) {
                         setStatus('verifying');
                         try {
@@ -83,13 +94,15 @@ function VerifyContent() {
                                 setStatus('error');
                                 setError(errData.error || 'Failed to update your status on Discord.');
                             }
-                        } catch {
+                        } catch (fetchErr) {
+                            console.error('Fetch Error:', fetchErr);
                             setStatus('error');
                             setError('A connection error occurred during verification.');
                         }
                     } else {
+                        console.error('❌ Proof verification failed');
                         setStatus('error');
-                        setError('Verification proof failed. Please try again.');
+                        setError('Verification proof failed. Please ensure you are using a valid passport.');
                     }
                 });
 
