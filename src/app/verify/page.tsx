@@ -6,7 +6,36 @@ import Image from 'next/image';
 import { Buffer } from 'buffer';
 
 // Fix for ZKPassport SDK dependency on Node.js Buffer in the browser
+// The 'buffer' package doesn't include BigInt methods, so we patch them
 if (typeof window !== 'undefined') {
+    // Add missing BigInt methods to Buffer prototype
+    if (!Buffer.prototype.writeBigUInt64BE) {
+        Buffer.prototype.writeBigUInt64BE = function (value: bigint, offset: number = 0) {
+            const hi = Number(value >> BigInt(32));
+            const lo = Number(value & BigInt(0xffffffff));
+            this.writeUInt32BE(hi, offset);
+            this.writeUInt32BE(lo, offset + 4);
+            return offset + 8;
+        };
+    }
+    if (!Buffer.prototype.writeBigInt64BE) {
+        Buffer.prototype.writeBigInt64BE = function (value: bigint, offset: number = 0) {
+            return this.writeBigUInt64BE(BigInt.asUintN(64, value), offset);
+        };
+    }
+    if (!Buffer.prototype.readBigUInt64BE) {
+        Buffer.prototype.readBigUInt64BE = function (offset: number = 0) {
+            const hi = BigInt(this.readUInt32BE(offset));
+            const lo = BigInt(this.readUInt32BE(offset + 4));
+            return (hi << BigInt(32)) | lo;
+        };
+    }
+    if (!Buffer.prototype.readBigInt64BE) {
+        Buffer.prototype.readBigInt64BE = function (offset: number = 0) {
+            const value = this.readBigUInt64BE(offset);
+            return BigInt.asIntN(64, value);
+        };
+    }
     (window as any).Buffer = Buffer;
 }
 
