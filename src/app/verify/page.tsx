@@ -3,6 +3,12 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import { Buffer } from 'buffer';
+
+// Fix for ZKPassport SDK dependency on Node.js Buffer in the browser
+if (typeof window !== 'undefined') {
+    (window as any).Buffer = Buffer;
+}
 
 import { QRCodeSVG } from 'qrcode.react';
 
