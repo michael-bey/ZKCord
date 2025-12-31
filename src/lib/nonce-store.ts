@@ -27,6 +27,7 @@ function getRedis() {
 interface NonceData {
   discordUserId: string;
   guildId: string;
+  username?: string;
   createdAt: number;
 }
 

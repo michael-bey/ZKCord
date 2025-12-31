@@ -15,7 +15,8 @@ import { QRCodeSVG } from 'qrcode.react';
 function VerifyContent() {
     const searchParams = useSearchParams();
     const nonce = searchParams.get('nonce');
-    const [status, setStatus] = useState<'loading' | 'ready' | 'verifying' | 'success' | 'error' | 'scanned' | 'generating'>('loading');
+    const [status, setStatus] = useState<'loading' | 'confirm' | 'ready' | 'verifying' | 'success' | 'error' | 'scanned' | 'generating'>('loading');
+    const [username, setUsername] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [verifyUrl, setVerifyUrl] = useState<string | null>(null);
     const [isMobile, setIsMobile] = useState(false);
@@ -31,6 +32,30 @@ function VerifyContent() {
             return;
         }
 
+        // Fetch user info for confirmation
+        const fetchUserInfo = async () => {
+            try {
+                const response = await fetch(`/api/nonce-info?nonce=${nonce}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setUsername(data.username);
+                    setStatus('confirm');
+                } else {
+                    const err = await response.json();
+                    setStatus('error');
+                    setError(err.error || 'Invalid or expired verification link.');
+                }
+            } catch (e) {
+                setStatus('error');
+                setError('Failed to validate verification link.');
+            }
+        };
+
+        fetchUserInfo();
+    }, [nonce]);
+
+    const startZkPassport = async () => {
+        setStatus('loading');
         const initZkPassport = async () => {
             try {
                 const { ZKPassport } = await import('@zkpassport/sdk');
@@ -119,7 +144,7 @@ function VerifyContent() {
                 });
 
                 // On mobile, auto-redirect to app
-                if (mobile) {
+                if (isMobile) {
                     setTimeout(() => {
                         window.location.href = url;
                     }, 1000);
@@ -133,7 +158,7 @@ function VerifyContent() {
         };
 
         initZkPassport();
-    }, [nonce]);
+    };
 
     return (
         <div className="verify-container glass animate-fade-in">
@@ -146,6 +171,21 @@ function VerifyContent() {
                     <div className="loading-state">
                         <div className="spinner"></div>
                         <p>Initializing...</p>
+                    </div>
+                )}
+
+                {status === 'confirm' && (
+                    <div className="confirm-state animate-slide-up">
+                        <h1>Confirm Your Identity</h1>
+                        <p className="subtitle">You are verifying as:</p>
+                        <div className="username-badge">
+                            <span className="at">@</span>{username}
+                        </div>
+                        <p className="confirm-warning">Make sure this is your Discord account before continuing.</p>
+                        <div className="confirm-actions">
+                            <button className="btn-primary" onClick={startZkPassport}>Continue to Verify</button>
+                            <button className="btn-cancel" onClick={() => window.close()}>Cancel</button>
+                        </div>
                     </div>
                 )}
 
@@ -368,6 +408,51 @@ function VerifyContent() {
                 .btn-primary:hover, .btn-close:hover, .btn-retry:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+                }
+
+                .username-badge {
+                    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(88, 101, 242, 0.2));
+                    border: 1px solid rgba(139, 92, 246, 0.4);
+                    padding: 1rem 2rem;
+                    border-radius: 12px;
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    margin: 1.5rem 0;
+                    display: inline-block;
+                }
+
+                .username-badge .at {
+                    color: var(--accent);
+                    margin-right: 2px;
+                }
+
+                .confirm-warning {
+                    color: rgba(255, 255, 255, 0.5);
+                    font-size: 0.85rem;
+                    margin-bottom: 2rem;
+                }
+
+                .confirm-actions {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.75rem;
+                    align-items: center;
+                }
+
+                .btn-cancel {
+                    background: transparent;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    color: rgba(255, 255, 255, 0.6);
+                    padding: 0.6rem 1.5rem;
+                    border-radius: 50px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .btn-cancel:hover {
+                    background: rgba(255, 255, 255, 0.05);
+                    border-color: rgba(255, 255, 255, 0.3);
                 }
 
                 @keyframes spin {

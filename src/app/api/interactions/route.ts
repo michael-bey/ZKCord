@@ -63,13 +63,30 @@ async function handleVerify(interaction: any) {
         }
 
         const discordUserId = user.id;
+        const username = user.username || user.global_name || 'Unknown User';
         const guildId = interaction.guild_id; // Will be undefined in DMs
 
-        console.log(`📝 Saving nonce for user ${discordUserId} (Guild: ${guildId || 'DM'})`);
+        // Rate limit: 5 verification requests per hour
+        const { checkRateLimit } = await import('@/lib/rate-limit');
+        const rateLimit = await checkRateLimit(`verify:${discordUserId}`, 5, 3600);
+
+        if (!rateLimit.allowed) {
+            console.log(`⚠️ Rate limit exceeded for user ${discordUserId}`);
+            return NextResponse.json({
+                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                data: {
+                    content: `⚠️ Too many verification requests. Please try again in ${Math.ceil(rateLimit.resetInSeconds / 60)} minutes.`,
+                    flags: 64, // Ephemeral
+                },
+            });
+        }
+
+        console.log(`📝 Saving nonce for user ${discordUserId} (@${username}) (Guild: ${guildId || 'DM'})`);
 
         await saveNonce(nonce, {
             discordUserId,
             guildId,
+            username,
             createdAt: Date.now(),
         });
 

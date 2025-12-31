@@ -53,6 +53,17 @@ export async function POST(req: NextRequest) {
 
         const { discordUserId, guildId } = nonceData;
 
+        // Rate limit: 3 verification attempts per hour
+        const { checkRateLimit } = await import('@/lib/rate-limit');
+        const rateLimit = await checkRateLimit(`result:${discordUserId}`, 3, 3600);
+
+        if (!rateLimit.allowed) {
+            console.log(`⚠️ Rate limit exceeded for verification attempts: ${discordUserId}`);
+            return NextResponse.json({
+                error: `Too many verification attempts. Please try again in ${Math.ceil(rateLimit.resetInSeconds / 60)} minutes.`
+            }, { status: 429 });
+        }
+
         // Sybil protection
         const existingUser = await isIdentifierUsed(uniqueIdentifier);
         if (existingUser && existingUser !== discordUserId) {
