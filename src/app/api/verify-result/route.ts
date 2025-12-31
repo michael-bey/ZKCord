@@ -35,6 +35,10 @@ export async function POST(req: NextRequest) {
     try {
         const { nonce, verified, uniqueIdentifier, firstname, nationality } = await req.json();
 
+        if (!nonce || !uniqueIdentifier || verified === undefined) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
         if (!verified) {
             return NextResponse.json({ error: 'Proof not verified' }, { status: 400 });
         }
@@ -43,6 +47,9 @@ export async function POST(req: NextRequest) {
         if (!nonceData) {
             return NextResponse.json({ error: 'Invalid or expired nonce' }, { status: 400 });
         }
+
+        // Invalidate nonce immediately to prevent replay
+        await deleteNonce(nonce);
 
         const { discordUserId, guildId } = nonceData;
 
@@ -54,39 +61,26 @@ export async function POST(req: NextRequest) {
 
         console.log(`Verified user ${discordUserId} (${firstname}) in guild ${guildId} with unique ID ${uniqueIdentifier}`);
 
-        // Grant the role if VERIFIED_ROLE_ID is set
-        if (VERIFIED_ROLE_ID) {
-            try {
-                await grantDiscordRole(guildId, discordUserId, VERIFIED_ROLE_ID, 'ZKcord verification successful');
-                console.log(`Granted role ${VERIFIED_ROLE_ID} to user ${discordUserId}`);
-            } catch (roleError) {
-                console.error('Failed to grant verified role:', roleError);
-            }
-        }
-
-        // Grant US role if applicable
-        if (US_ROLE_ID && nationality === 'United States') {
-            try {
-                await grantDiscordRole(guildId, discordUserId, US_ROLE_ID, 'ZKcord US citizenship verification');
-                console.log(`Granted US role ${US_ROLE_ID} to user ${discordUserId}`);
-            } catch (roleError) {
-                console.error('Failed to grant US role:', roleError);
-            }
-        }
-
-        // Grant EU role if applicable
-        if (EU_ROLE_ID && EU_COUNTRIES.includes(nationality as any)) {
-            try {
-                await grantDiscordRole(guildId, discordUserId, EU_ROLE_ID, 'ZKcord EU citizenship verification');
-                console.log(`Granted EU role ${EU_ROLE_ID} to user ${discordUserId}`);
-            } catch (roleError) {
-                console.error('Failed to grant EU role:', roleError);
-            }
-        }
-
-        // Mark nonce and identifier as used
-        await deleteNonce(nonce);
+        // Mark identifier as used early to prevent parallel races
         await markIdentifierAsUsed(uniqueIdentifier, discordUserId);
+
+        // Grant roles...
+        const responses = [];
+
+        if (VERIFIED_ROLE_ID) {
+            responses.push(grantDiscordRole(guildId, discordUserId, VERIFIED_ROLE_ID, 'ZKCord verification successful'));
+        }
+
+        if (US_ROLE_ID && nationality === 'United States') {
+            responses.push(grantDiscordRole(guildId, discordUserId, US_ROLE_ID, 'ZKCord US citizenship verification'));
+        }
+
+        if (EU_ROLE_ID && typeof nationality === 'string' && EU_COUNTRIES.includes(nationality)) {
+            responses.push(grantDiscordRole(guildId, discordUserId, EU_ROLE_ID, 'ZKCord EU citizenship verification'));
+        }
+
+        // We run role grants in parallel and don't block the response, but we catch errors
+        Promise.all(responses).catch(err => console.error('Role Grant Error:', err));
 
         return NextResponse.json({ success: true });
     } catch (error) {

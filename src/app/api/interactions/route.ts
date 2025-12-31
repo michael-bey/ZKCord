@@ -30,8 +30,17 @@ export async function POST(req: NextRequest) {
     if (interaction.type === InteractionType.APPLICATION_COMMAND) {
         if (interaction.data.name === 'verify') {
             const nonce = uuidv4();
-            const discordUserId = interaction.member.user.id;
-            const guildId = interaction.guild_id;
+
+            // In DMs, member is undefined, use interaction.user instead
+            const user = interaction.member?.user || interaction.user;
+
+            if (!user) {
+                console.error('Could not find user in interaction:', interaction);
+                return NextResponse.json({ error: 'User not found' }, { status: 400 });
+            }
+
+            const discordUserId = user.id;
+            const guildId = interaction.guild_id; // Will be undefined in DMs
 
             await saveNonce(nonce, {
                 discordUserId,
