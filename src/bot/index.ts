@@ -4,8 +4,8 @@ const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 
 if (!DISCORD_TOKEN || !DISCORD_CLIENT_ID) {
-    console.error('Missing DISCORD_TOKEN or DISCORD_CLIENT_ID in environment variables');
-    process.exit(1);
+    console.warn('⚠️ Missing DISCORD_TOKEN or DISCORD_CLIENT_ID. Skipping slash command registration.');
+    process.exit(0);
 }
 
 const commands = [
