@@ -39,7 +39,7 @@ export default function Home() {
           </p>
 
           <div className="cta-group animate-slide-up-more">
-            <button className="btn-primary" onClick={() => window.open('https://discord.com', '_blank')}>
+            <button className="btn-primary" onClick={() => window.open('https://discord.com/api/oauth2/authorize?client_id=1456016871017943112&permissions=268435456&scope=bot%20applications.commands', '_blank')}>
               Invite to Discord
             </button>
             <button className="btn-secondary" onClick={() => setShowDemo(!showDemo)}>
@@ -281,6 +281,38 @@ const { url, onResult } = queryBuilder
           </div>
         </section>
       </main>
+
+      <section className="download-section animate-fade-in">
+        <div className="download-card glass">
+          <div className="download-content">
+            <h2 className="section-title">Get the App</h2>
+            <p className="description">
+              Download ZKPassport to verify your identity and manage your private credentials.
+            </p>
+            <div className="store-buttons">
+              <a
+                href="https://apps.apple.com/us/app/zkpassport/id6449170258"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="store-btn"
+              >
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.21-1.96 1.07-3.11-1.05.05-2.31.74-3.03 1.58-.67.77-1.24 2-1.07 3.12 1.17.09 2.33-.73 3.03-1.59" /></svg>
+                <span>App Store</span>
+              </a>
+              <a
+                href="https://play.google.com/store/apps/details?id=id.zkpassport"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="store-btn"
+              >
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3,20.5V3.5C3,2.91,3.34,2.39,3.84,2.15L13.69,12L3.84,21.85C3.34,21.6,3,21.09,3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08,20.75,11.5,20.75,12C20.75,12.5,20.5,12.92,20.16,13.19L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" /></svg>
+                <span>Google Play</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
 
       <footer className="footer">
         <div className="footer-content">
@@ -768,8 +800,59 @@ const { url, onResult } = queryBuilder
         .animate-slide-up-delayed { animation: slideUp 0.8s ease-out 0.2s forwards; opacity: 0; }
         .animate-slide-up-more { animation: slideUp 0.8s ease-out 0.4s forwards; opacity: 0; }
 
+        /* Download Section */
+        .download-section {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 0 2rem;
+          margin-bottom: 4rem;
+        }
+
+        .download-card {
+          padding: 4rem 2rem;
+          text-align: center;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+        }
+
+        .download-content .description {
+          margin-bottom: 2.5rem;
+        }
+
+        .store-buttons {
+          display: flex;
+          justify-content: center;
+          gap: 1.5rem;
+          flex-wrap: wrap;
+        }
+
+        .store-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          background: white;
+          color: black;
+          padding: 0.8rem 1.5rem;
+          border-radius: 12px;
+          text-decoration: none;
+          font-weight: 600;
+          transition: all 0.2s;
+        }
+
+        .store-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 20px rgba(255, 255, 255, 0.15);
+        }
+
+        .store-btn svg {
+          width: 24px;
+          height: 24px;
+        }
+
         @media (max-width: 768px) {
           .title { font-size: 3rem; }
+          .store-buttons { flex-direction: column; align-items: center; }
+          .store-btn { width: 100%; justify-content: center; max-width: 280px; }
         }
       `}</style>
     </div>

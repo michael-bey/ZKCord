@@ -41,7 +41,7 @@ export default function AdminGuide() {
                             <p>Add ZKCord to your Discord server using the invite link.</p>
                             <button
                                 className="btn-secondary"
-                                onClick={() => window.open('https://discord.com/api/oauth2/authorize?client_id=1323398337838579803&permissions=268435456&scope=bot%20applications.commands', '_blank')}
+                                onClick={() => window.open('https://discord.com/api/oauth2/authorize?client_id=1456016871017943112&permissions=268435456&scope=bot%20applications.commands', '_blank')}
                             >
                                 Invite Bot
                             </button>
