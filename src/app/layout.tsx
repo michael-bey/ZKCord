@@ -129,7 +129,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: bufferPolyfillScript }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         {children}
       </body>
     </html>
