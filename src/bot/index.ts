@@ -11,7 +11,7 @@ if (!DISCORD_TOKEN || !DISCORD_CLIENT_ID) {
 const commands = [
     {
         name: 'verify',
-        description: 'Verify your identity with ZKcord',
+        description: 'Privately verify your age & nationality using ZK proofs — no ID upload required',
         type: 1, // CHAT_INPUT
     },
 ];

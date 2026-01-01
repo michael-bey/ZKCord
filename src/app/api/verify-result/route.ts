@@ -81,6 +81,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields (nonce, proofs, queryResult, uniqueIdentifier)' }, { status: 400 });
         }
 
+        // CSRF protection: validate origin
+        const origin = req.headers.get('origin');
+        if (origin && !origin.includes(new URL(APP_URL).hostname)) {
+            console.warn(`[Security] Rejected request from invalid origin: ${origin}`);
+            return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+        }
+
         const nonceData = await getNonce(nonce);
         if (!nonceData) {
             return NextResponse.json({ error: 'Invalid or expired nonce' }, { status: 400 });
@@ -91,16 +98,16 @@ export async function POST(req: NextRequest) {
 
         const { discordUserId, guildId } = nonceData;
 
-        // Rate limit temporarily disabled for testing
-        // const { checkRateLimit } = await import('@/lib/rate-limit');
-        // const rateLimit = await checkRateLimit(`result:${discordUserId}`, 3, 3600);
+        // Rate limiting to prevent abuse
+        const { checkRateLimit } = await import('@/lib/rate-limit');
+        const rateLimit = await checkRateLimit(`result:${discordUserId}`, 3, 3600);
 
-        // if (!rateLimit.allowed) {
-        //     console.log(`⚠️ Rate limit exceeded for verification attempts: ${discordUserId}`);
-        //     return NextResponse.json({
-        //         error: `Too many verification attempts. Please try again in ${Math.ceil(rateLimit.resetInSeconds / 60)} minutes.`
-        //     }, { status: 429 });
-        // }
+        if (!rateLimit.allowed) {
+            console.log(`⚠️ Rate limit exceeded for verification attempts: ${discordUserId}`);
+            return NextResponse.json({
+                error: `Too many verification attempts. Please try again in ${Math.ceil(rateLimit.resetInSeconds / 60)} minutes.`
+            }, { status: 429 });
+        }
 
         // =========================================
         // SERVER-SIDE PROOF VERIFICATION
@@ -140,10 +147,11 @@ export async function POST(req: NextRequest) {
             verifiedUniqueIdentifier = verificationResult.uniqueIdentifier || uniqueIdentifier;
             serverVerified = true;
         } catch (sdkError) {
-            // SDK may fail in serverless environments - log and continue with client data
-            console.warn('[Verification] Server-side SDK verification failed, using client data:', sdkError);
-            // Continue with client-provided uniqueIdentifier
-            // The client SDK already verified the proofs
+            // SECURITY: Fail closed - do not trust client data if server verification fails
+            console.error('[Verification] Server-side SDK verification failed:', sdkError);
+            return NextResponse.json({
+                error: 'Server-side verification failed. Please try again later.'
+            }, { status: 500 });
         }
 
         console.log(`[Verification] Using uniqueIdentifier: ${verifiedUniqueIdentifier}, serverVerified: ${serverVerified}`);

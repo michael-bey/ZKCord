@@ -14,14 +14,21 @@ async function postPortalMessage() {
     const message = {
         embeds: [
             {
-                title: '🛡️ ZKCord Verification Portal',
-                description: 'To access the rest of the server, you must verify your identity using ZKcord. \n\nClick the button below to start the process. This uses Zero-Knowledge proofs, keeping your personal details private.',
-                color: 0x5865F2, // Discord Blurple
+                title: 'Identity Verification Required',
+                description: 'This server uses **ZKCord** for privacy-preserving identity verification.\n\n**How it works:**\n• Scan a QR code with the ZKPassport app\n• Your passport is verified locally on your device\n• Only a cryptographic proof is shared — never your actual ID\n\n*Your personal data never leaves your phone.*',
+                color: 0x8B5CF6, // Purple to match branding
                 thumbnail: {
-                    url: 'https://zkcord.xyz/logo.png', // Assuming logo is at this path or standard
+                    url: 'https://zkcord.vercel.app/logo.png',
                 },
+                fields: [
+                    {
+                        name: 'Requirements',
+                        value: '• Age 18+\n• Valid (non-expired) passport\n• ZKPassport app installed',
+                        inline: false,
+                    },
+                ],
                 footer: {
-                    text: 'Privacy-Preserving Verification by ZKcord',
+                    text: 'Powered by ZKPassport • Zero-Knowledge Proofs',
                 },
             },
         ],
@@ -31,9 +38,12 @@ async function postPortalMessage() {
                 components: [
                     {
                         type: 2, // Button
-                        label: 'Verify Now',
-                        style: 1, // Primary (Blurple)
+                        label: 'Start Verification',
+                        style: 1, // Primary
                         custom_id: 'start_verification',
+                        emoji: {
+                            name: '🔐',
+                        },
                     },
                 ],
             },
