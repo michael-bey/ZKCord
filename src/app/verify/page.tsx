@@ -113,7 +113,7 @@ function VerifyContent() {
                 }
 
                 const { ZKPassport, EU_COUNTRIES, SANCTIONED_COUNTRIES } = await import('@zkpassport/sdk');
-                const zkPassport = new ZKPassport();
+                const zkPassport = new ZKPassport(window.location.host); // Explicitly set domain
                 const queryBuilder = await zkPassport.request({
                     name: 'ZKCord',
                     logo: 'https://zkcord.vercel.app/logo.png',
