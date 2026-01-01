@@ -121,8 +121,8 @@ export async function POST(req: NextRequest) {
         const effectiveEURoleId = guildConfig?.euRoleId || process.env.DISCORD_EU_ROLE_ID;
 
         // Rate limiting to prevent abuse
-        const { checkRateLimit } = await import('@/lib/rate-limit');
-        const rateLimit = await checkRateLimit(`result:${discordUserId}`, 3, 3600);
+        // TEMPORARY: Increased limit for debugging purposes (50 attempts / hour)
+        const rateLimit = await checkRateLimit(`result:${discordUserId}`, 50, 3600);
 
         if (!rateLimit.allowed) {
             console.log(`⚠️ Rate limit exceeded for verification attempts: ${discordUserId}`);
