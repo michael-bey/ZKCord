@@ -61,6 +61,7 @@ interface QueryResult {
         disclose?: { result: string };
     };
     nationality?: {
+        disclose?: { result: string };
         in?: Array<{ result: boolean; expected: string[] }>;
         out?: { result: boolean };
     };
@@ -144,18 +145,26 @@ export async function POST(req: NextRequest) {
         // Extract verified data from queryResult
         const typedResult = queryResult as QueryResult;
         const firstname = typedResult.firstname?.disclose?.result || 'Unknown';
+        const nationality = typedResult.nationality?.disclose?.result || '';
 
-        // Extract nationality boolean results from .in() checks
-        const nationalityInResults = typedResult.nationality?.in || [];
-        const isUS = nationalityInResults[0]?.result === true;  // First .in() was US_COUNTRIES
-        const isEU = nationalityInResults[1]?.result === true;  // Second .in() was EU_COUNTRIES
+        // Determine US/EU from disclosed nationality
+        const normalizedNationality = typeof nationality === 'string' ? nationality.toUpperCase().trim() : '';
+        const isUS = ['USA', 'US', 'UNITED STATES', 'UNITED STATES OF AMERICA'].includes(normalizedNationality);
+
+        const EU_COUNTRIES = [
+            'AUSTRIA', 'BELGIUM', 'BULGARIA', 'CROATIA', 'CYPRUS', 'CZECH REPUBLIC', 'CZECHIA',
+            'DENMARK', 'ESTONIA', 'FINLAND', 'FRANCE', 'GERMANY', 'GREECE', 'HUNGARY',
+            'IRELAND', 'ITALY', 'LATVIA', 'LITHUANIA', 'LUXEMBOURG', 'MALTA', 'NETHERLANDS',
+            'POLAND', 'PORTUGAL', 'ROMANIA', 'SLOVAKIA', 'SLOVENIA', 'SPAIN', 'SWEDEN'
+        ];
+        const isEU = EU_COUNTRIES.includes(normalizedNationality);
 
         // Verify sanctions and age checks passed
         const notSanctioned = typedResult.nationality?.out?.result === true;
         const isAdult = typedResult.age?.gte?.result === true;
         const passportValid = typedResult.expiry_date?.gte?.result === true;
 
-        console.log(`[Verification] Verified user ${discordUserId} (${firstname}) in guild ${guildId}`);
+        console.log(`[Verification] Verified user ${discordUserId} (${firstname}) from ${nationality} in guild ${guildId}`);
         console.log(`[Verification] Checks: isUS=${isUS}, isEU=${isEU}, notSanctioned=${notSanctioned}, isAdult=${isAdult}, passportValid=${passportValid}`);
 
         // Additional server-side validation of query results

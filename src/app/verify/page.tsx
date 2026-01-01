@@ -122,20 +122,17 @@ function VerifyContent() {
                     devMode: false,
                 });
 
-                // Define country groups for role assignment
-                // Type assertion needed as SDK expects specific country literals
-                const US_COUNTRIES: ('United States')[] = ['United States'];
-
                 // Collect proofs for server-side verification
                 const collectedProofs: unknown[] = [];
 
+                // Note: .in() checks are REQUIREMENTS - only use for things that MUST pass
+                // For role assignment, we use .disclose('nationality') and check on backend
                 const { url, onResult, onError, onRequestReceived, onGeneratingProof, onBridgeConnect, onReject, onProofGenerated } = queryBuilder
                     .gte('age', 18)                                    // Must be 18+
                     .gte('expiry_date', new Date())                    // Passport must not be expired
                     .out('nationality', SANCTIONED_COUNTRIES)          // Exclude sanctioned countries
                     .disclose('firstname')
-                    .in('nationality', US_COUNTRIES)                   // Check if US citizen (boolean)
-                    .in('nationality', EU_COUNTRIES)                   // Check if EU citizen (boolean)
+                    .disclose('nationality')                           // Disclose for role assignment
                     .done();
 
                 setVerifyUrl(url);
