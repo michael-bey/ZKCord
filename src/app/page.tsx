@@ -291,7 +291,7 @@ const { url, onResult } = queryBuilder
             </p>
             <div className="store-buttons">
               <a
-                href="https://apps.apple.com/us/app/zkpassport/id6449170258"
+                href="https://apps.apple.com/us/app/zkpassport/id6477371975"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="store-btn"
@@ -300,7 +300,7 @@ const { url, onResult } = queryBuilder
                 <span>App Store</span>
               </a>
               <a
-                href="https://play.google.com/store/apps/details?id=id.zkpassport"
+                href="https://play.google.com/store/apps/details?id=app.zkpassport.zkpassport&hl=en_US"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="store-btn"
