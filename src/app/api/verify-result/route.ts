@@ -78,7 +78,17 @@ interface QueryResult {
 
 export async function POST(req: NextRequest) {
     try {
-        const { nonce, proofs, queryResult, uniqueIdentifier } = await req.json();
+        // Debug: Check environment variables
+        if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+            console.error('[Configuration] Missing Upstash Redis environment variables');
+            return NextResponse.json({ error: 'Server configuration error: Missing database credentials' }, { status: 500 });
+        }
+
+        const body = await req.json().catch(e => {
+            console.error('[API] Failed to parse JSON body:', e);
+            throw new Error('Invalid JSON body');
+        });
+        const { nonce, proofs, queryResult, uniqueIdentifier } = body;
 
         if (!nonce || !proofs || !queryResult || !uniqueIdentifier) {
             return NextResponse.json({ error: 'Missing required fields (nonce, proofs, queryResult, uniqueIdentifier)' }, { status: 400 });
@@ -162,7 +172,8 @@ export async function POST(req: NextRequest) {
             // SECURITY: Fail closed - do not trust client data if server verification fails
             console.error('[Verification] Server-side SDK verification failed:', sdkError);
             return NextResponse.json({
-                error: 'Server-side verification failed. Please try again later.'
+                error: 'Server-side verification failed.',
+                details: sdkError instanceof Error ? sdkError.message : String(sdkError)
             }, { status: 500 });
         }
 
@@ -308,6 +319,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, rolesGranted: successRoles.length });
     } catch (error) {
         console.error('API Error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Internal server error',
+            details: error instanceof Error ? error.message : String(error)
+        }, { status: 500 });
     }
 }
