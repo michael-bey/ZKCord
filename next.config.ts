@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Externalize heavy packages from server bundles
   serverExternalPackages: [
-    "@zkpassport/sdk",
     "@aztec/bb.js",
     "@zkpassport/registry",
     "@zkpassport/utils",
