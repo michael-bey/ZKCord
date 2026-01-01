@@ -1,8 +1,4 @@
 import type { NextConfig } from "next";
-import path from "path";
-
-// Path to our Buffer shim that adds BigInt methods
-const bufferShimPath = path.resolve(__dirname, 'src/lib/buffer-shim.ts');
 
 const nextConfig: NextConfig = {
   // Externalize heavy packages from server bundles
@@ -27,10 +23,11 @@ const nextConfig: NextConfig = {
   },
 
   // Turbopack configuration - CRITICAL for Buffer BigInt polyfill
+  // Use relative path from project root for Turbopack
   turbopack: {
     resolveAlias: {
       // All imports of 'buffer' should use our polyfilled version
-      'buffer': bufferShimPath,
+      'buffer': './src/lib/buffer-shim.ts',
     },
   },
 
