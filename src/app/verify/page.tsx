@@ -503,8 +503,9 @@ function VerifyContent() {
                 .confirm-actions {
                     display: flex;
                     flex-direction: column;
-                    gap: 0.75rem;
+                    gap: 1rem;
                     align-items: center;
+                    margin-top: 0.5rem;
                 }
 
                 .btn-cancel {
