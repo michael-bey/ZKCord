@@ -152,7 +152,6 @@ export async function POST(req: NextRequest) {
                 proofs,
                 queryResult,
                 scope: 'zkcord-verification',
-                domain: domain,
                 writingDirectory: '/tmp', // Required for Vercel serverless environment
             });
 
