@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
       "@noble/hashes",
       "qrcode.react",
     ],
+    // FORCE include WASM files for @aztec/bb.js in Vercel lambda
+    outputFileTracingIncludes: {
+      '/api/**/*': ['node_modules/@aztec/bb.js/**/*'],
+    },
   },
 
   // Turbopack: Keep empty to use webpack for production builds
