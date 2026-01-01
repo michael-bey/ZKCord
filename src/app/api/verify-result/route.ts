@@ -29,9 +29,27 @@ async function grantDiscordRole(guildId: string, userId: string, roleId: string,
         });
 
         if (!response.ok) {
-            const error = await response.text();
-            console.error(`[Role Grant] Failed for role ${roleId}: ${response.status} ${error}`);
-            return { success: false, roleId, error: `${response.status}: ${error}` };
+            const errorText = await response.text();
+            console.error(`[Role Grant] Failed for role ${roleId}: ${response.status} ${errorText}`);
+
+            // Parse Discord error for user-friendly message
+            let friendlyError = `${response.status}: ${errorText}`;
+            try {
+                const errorJson = JSON.parse(errorText);
+                if (errorJson.code === 50013) {
+                    friendlyError = 'Bot lacks permission to assign roles. Please ensure the bot\'s role is positioned above the verification roles in Discord server settings.';
+                } else if (errorJson.code === 10007) {
+                    friendlyError = 'User not found in this server. Please make sure you are a member of the Discord server.';
+                } else if (errorJson.code === 10011) {
+                    friendlyError = 'Role not found. The configured role may have been deleted from the server.';
+                } else if (errorJson.message) {
+                    friendlyError = errorJson.message;
+                }
+            } catch {
+                // Keep original error if JSON parsing fails
+            }
+
+            return { success: false, roleId, error: friendlyError };
         }
 
         console.log(`[Role Grant] Successfully granted role ${roleId}`);
