@@ -7,6 +7,7 @@ const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const VERIFIED_ROLE_ID = process.env.DISCORD_VERIFIED_ROLE_ID;
 const US_ROLE_ID = process.env.DISCORD_US_ROLE_ID;
 const EU_ROLE_ID = process.env.DISCORD_EU_ROLE_ID;
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://zkcord.vercel.app';
 
 async function grantDiscordRole(guildId: string, userId: string, roleId: string, reason: string): Promise<{ success: boolean; roleId: string; error?: string }> {
     const url = `https://discord.com/api/v10/guilds/${guildId}/members/${userId}/roles/${roleId}`;
@@ -54,16 +55,29 @@ async function grantDiscordRole(guildId: string, userId: string, roleId: string,
     }
 }
 
+// Define interfaces for ZKPassport types
+interface QueryResult {
+    firstname?: {
+        disclose?: { result: string };
+    };
+    nationality?: {
+        in?: Array<{ result: boolean; expected: string[] }>;
+        out?: { result: boolean };
+    };
+    age?: {
+        gte?: { result: boolean };
+    };
+    expiry_date?: {
+        gte?: { result: boolean };
+    };
+}
+
 export async function POST(req: NextRequest) {
     try {
-        const { nonce, verified, uniqueIdentifier, firstname, isUS, isEU } = await req.json();
+        const { nonce, proofs, queryResult, uniqueIdentifier } = await req.json();
 
-        if (!nonce || !uniqueIdentifier || verified === undefined) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-        }
-
-        if (!verified) {
-            return NextResponse.json({ error: 'Proof not verified' }, { status: 400 });
+        if (!nonce || !proofs || !queryResult || !uniqueIdentifier) {
+            return NextResponse.json({ error: 'Missing required fields (nonce, proofs, queryResult, uniqueIdentifier)' }, { status: 400 });
         }
 
         const nonceData = await getNonce(nonce);
@@ -87,16 +101,78 @@ export async function POST(req: NextRequest) {
             }, { status: 429 });
         }
 
+        // =========================================
+        // SERVER-SIDE PROOF VERIFICATION (CRITICAL)
+        // =========================================
+        console.log('[Verification] Starting server-side proof verification...');
+
+        // Extract domain from APP_URL for ZKPassport initialization
+        const domain = new URL(APP_URL).hostname;
+
+        // Dynamically import ZKPassport SDK for server-side verification. The SDK
+        // will verify cryptographic proofs to ensure the client didn't forge data.
+        const { ZKPassport } = await import('@zkpassport/sdk');
+        const zkPassport = new ZKPassport(domain);
+
+        const verificationResult = await zkPassport.verify({
+            proofs,
+            queryResult,
+        });
+
+        console.log('[Verification] Server verification result:', {
+            verified: verificationResult.verified,
+            uniqueIdentifier: verificationResult.uniqueIdentifier,
+            errors: verificationResult.queryResultErrors,
+        });
+
+        if (!verificationResult.verified) {
+            console.error('[Verification] Server-side verification FAILED:', verificationResult.queryResultErrors);
+            return NextResponse.json({
+                error: 'Proof verification failed on server. The verification data may have been tampered with.'
+            }, { status: 400 });
+        }
+
+        // Use the server-verified unique identifier (not the client-provided one for security)
+        const verifiedUniqueIdentifier = verificationResult.uniqueIdentifier || uniqueIdentifier;
+
         // Sybil protection
-        const existingUser = await isIdentifierUsed(uniqueIdentifier);
+        const existingUser = await isIdentifierUsed(verifiedUniqueIdentifier);
         if (existingUser && existingUser !== discordUserId) {
             return NextResponse.json({ error: 'This passport has already been used to verify another Discord account.' }, { status: 400 });
         }
 
-        console.log(`Verified user ${discordUserId} (${firstname}) in guild ${guildId} with unique ID ${uniqueIdentifier}`);
+        // Extract verified data from queryResult
+        const typedResult = queryResult as QueryResult;
+        const firstname = typedResult.firstname?.disclose?.result || 'Unknown';
+
+        // Extract nationality boolean results from .in() checks
+        const nationalityInResults = typedResult.nationality?.in || [];
+        const isUS = nationalityInResults[0]?.result === true;  // First .in() was US_COUNTRIES
+        const isEU = nationalityInResults[1]?.result === true;  // Second .in() was EU_COUNTRIES
+
+        // Verify sanctions and age checks passed
+        const notSanctioned = typedResult.nationality?.out?.result === true;
+        const isAdult = typedResult.age?.gte?.result === true;
+        const passportValid = typedResult.expiry_date?.gte?.result === true;
+
+        console.log(`[Verification] Verified user ${discordUserId} (${firstname}) in guild ${guildId}`);
+        console.log(`[Verification] Checks: isUS=${isUS}, isEU=${isEU}, notSanctioned=${notSanctioned}, isAdult=${isAdult}, passportValid=${passportValid}`);
+
+        // Additional server-side validation of query results
+        if (!isAdult) {
+            return NextResponse.json({ error: 'Age verification failed. You must be 18 or older.' }, { status: 400 });
+        }
+
+        if (!notSanctioned) {
+            return NextResponse.json({ error: 'Nationality verification failed. Users from sanctioned countries cannot be verified.' }, { status: 400 });
+        }
+
+        if (!passportValid) {
+            return NextResponse.json({ error: 'Your passport appears to be expired. Please use a valid, non-expired document.' }, { status: 400 });
+        }
 
         // Mark identifier as used early to prevent parallel races
-        await markIdentifierAsUsed(uniqueIdentifier, discordUserId);
+        await markIdentifierAsUsed(verifiedUniqueIdentifier, discordUserId);
 
         // Grant roles and wait for completion
         const rolePromises: Promise<{ success: boolean; roleId: string; error?: string }>[] = [];
@@ -110,7 +186,7 @@ export async function POST(req: NextRequest) {
             console.warn('[Verification] DISCORD_VERIFIED_ROLE_ID is not set!');
         }
 
-        // Use boolean flags from SDK's .in() check
+        // Use server-verified boolean flags
         if (US_ROLE_ID && isUS === true) {
             console.log(`[Verification] Granting US role`);
             rolePromises.push(grantDiscordRole(guildId, discordUserId, US_ROLE_ID, 'ZKCord US citizenship verification'));

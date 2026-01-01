@@ -112,7 +112,7 @@ function VerifyContent() {
                     console.log('[ZKCord] Buffer BigInt methods patched');
                 }
 
-                const { ZKPassport, EU_COUNTRIES } = await import('@zkpassport/sdk');
+                const { ZKPassport, EU_COUNTRIES, SANCTIONED_COUNTRIES } = await import('@zkpassport/sdk');
                 const zkPassport = new ZKPassport();
                 const queryBuilder = await zkPassport.request({
                     name: 'ZKCord',
@@ -122,14 +122,19 @@ function VerifyContent() {
                     devMode: false,
                 });
 
-                // Use .in() for nationality checks - returns boolean result instead of raw string
+                // Define country groups for role assignment
                 const US_COUNTRIES = ['United States'] as const;
 
+                // Collect proofs for server-side verification
+                const collectedProofs: unknown[] = [];
+
                 const { url, onResult, onError, onRequestReceived, onGeneratingProof, onBridgeConnect, onReject, onProofGenerated } = queryBuilder
-                    .gte('age', 18)
+                    .gte('age', 18)                                    // Must be 18+
+                    .gte('expiry_date', new Date())                    // Passport must not be expired
+                    .out('nationality', SANCTIONED_COUNTRIES)          // Exclude sanctioned countries
                     .disclose('firstname')
-                    .in('nationality', US_COUNTRIES)  // Check if US citizen (boolean)
-                    .in('nationality', EU_COUNTRIES)  // Check if EU citizen (boolean)
+                    .in('nationality', US_COUNTRIES)                   // Check if US citizen (boolean)
+                    .in('nationality', EU_COUNTRIES)                   // Check if EU citizen (boolean)
                     .done();
 
                 setVerifyUrl(url);
@@ -151,6 +156,7 @@ function VerifyContent() {
 
                 onProofGenerated((proof) => {
                     console.log('🗳️ Proof generated', proof);
+                    collectedProofs.push(proof);
                 });
 
                 onReject(() => {
@@ -164,24 +170,16 @@ function VerifyContent() {
                     if (verified) {
                         setStatus('verifying');
                         try {
-                            // Extract boolean results from .in() checks
-                            // The result structure has nationality.in as an array of results
-                            const nationalityResults = result.nationality?.in || [];
-                            const isUS = nationalityResults[0]?.result === true;  // First .in() was US_COUNTRIES
-                            const isEU = nationalityResults[1]?.result === true;  // Second .in() was EU_COUNTRIES
-
-                            console.log('🌍 Nationality results:', { isUS, isEU, nationalityResults });
-
+                            // Send proofs and queryResult to server for verification
+                            // Server will verify proofs independently (security best practice)
                             const response = await fetch('/api/verify-result', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                     nonce,
-                                    verified,
+                                    proofs: collectedProofs,
+                                    queryResult: result,
                                     uniqueIdentifier,
-                                    firstname: result.firstname?.disclose?.result,
-                                    isUS,
-                                    isEU,
                                 }),
                             });
 
@@ -200,7 +198,7 @@ function VerifyContent() {
                     } else {
                         console.error('❌ Proof verification failed');
                         setStatus('error');
-                        setError('Verification proof failed. Please ensure you are using a valid passport.');
+                        setError('Verification proof failed. Please ensure you are using a valid, non-expired passport from a non-sanctioned country.');
                     }
                 });
 
