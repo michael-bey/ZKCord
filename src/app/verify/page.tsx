@@ -53,6 +53,65 @@ function VerifyContent() {
         setStatus('loading');
         const initZkPassport = async () => {
             try {
+                // CRITICAL: Patch Buffer with BigInt methods BEFORE importing SDK
+                // @aztec/bb.js uses these methods during module evaluation
+                if (typeof window !== 'undefined' && window.Buffer) {
+                    const BufferProto = window.Buffer.prototype;
+                    if (typeof BufferProto.writeBigUInt64BE !== 'function') {
+                        BufferProto.writeBigUInt64BE = function (value: bigint, offset: number = 0): number {
+                            const hi = Number(value >> BigInt(32));
+                            const lo = Number(value & BigInt(0xffffffff));
+                            this.writeUInt32BE(hi, offset);
+                            this.writeUInt32BE(lo, offset + 4);
+                            return offset + 8;
+                        };
+                    }
+                    if (typeof BufferProto.writeBigInt64BE !== 'function') {
+                        BufferProto.writeBigInt64BE = function (value: bigint, offset: number = 0): number {
+                            return this.writeBigUInt64BE(BigInt.asUintN(64, value), offset);
+                        };
+                    }
+                    if (typeof BufferProto.writeBigUInt64LE !== 'function') {
+                        BufferProto.writeBigUInt64LE = function (value: bigint, offset: number = 0): number {
+                            const lo = Number(value & BigInt(0xffffffff));
+                            const hi = Number(value >> BigInt(32));
+                            this.writeUInt32LE(lo, offset);
+                            this.writeUInt32LE(hi, offset + 4);
+                            return offset + 8;
+                        };
+                    }
+                    if (typeof BufferProto.writeBigInt64LE !== 'function') {
+                        BufferProto.writeBigInt64LE = function (value: bigint, offset: number = 0): number {
+                            return this.writeBigUInt64LE(BigInt.asUintN(64, value), offset);
+                        };
+                    }
+                    if (typeof BufferProto.readBigUInt64BE !== 'function') {
+                        BufferProto.readBigUInt64BE = function (offset: number = 0): bigint {
+                            const hi = BigInt(this.readUInt32BE(offset));
+                            const lo = BigInt(this.readUInt32BE(offset + 4));
+                            return (hi << BigInt(32)) | lo;
+                        };
+                    }
+                    if (typeof BufferProto.readBigInt64BE !== 'function') {
+                        BufferProto.readBigInt64BE = function (offset: number = 0): bigint {
+                            return BigInt.asIntN(64, this.readBigUInt64BE(offset));
+                        };
+                    }
+                    if (typeof BufferProto.readBigUInt64LE !== 'function') {
+                        BufferProto.readBigUInt64LE = function (offset: number = 0): bigint {
+                            const lo = BigInt(this.readUInt32LE(offset));
+                            const hi = BigInt(this.readUInt32LE(offset + 4));
+                            return (hi << BigInt(32)) | lo;
+                        };
+                    }
+                    if (typeof BufferProto.readBigInt64LE !== 'function') {
+                        BufferProto.readBigInt64LE = function (offset: number = 0): bigint {
+                            return BigInt.asIntN(64, this.readBigUInt64LE(offset));
+                        };
+                    }
+                    console.log('[ZKCord] Buffer BigInt methods patched');
+                }
+
                 const { ZKPassport } = await import('@zkpassport/sdk');
                 const zkPassport = new ZKPassport();
                 const queryBuilder = await zkPassport.request({

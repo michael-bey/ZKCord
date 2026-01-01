@@ -1,4 +1,8 @@
 import type { NextConfig } from "next";
+import path from "path";
+
+// Path to our Buffer shim that adds BigInt methods
+const bufferShimPath = path.resolve(__dirname, 'src/lib/buffer-shim.ts');
 
 const nextConfig: NextConfig = {
   // Externalize heavy packages from server bundles
@@ -22,8 +26,14 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Empty turbopack config (required for Next.js 16 with webpack config)
-  turbopack: {},
+  // Turbopack configuration - CRITICAL for Buffer BigInt polyfill
+  turbopack: {
+    resolveAlias: {
+      // All imports of 'buffer' should use our polyfilled version
+      'buffer': bufferShimPath,
+      'buffer/': bufferShimPath,
+    },
+  },
 
   // Configure webpack to reduce build overhead
   webpack: (config, { isServer }) => {
