@@ -3,12 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { Buffer } from 'buffer';
-
-// Expose Buffer globally for ZKPassport SDK
-if (typeof window !== 'undefined') {
-    (window as any).Buffer = Buffer;
-}
+import '@/lib/buffer-shim'; // Must be imported first to polyfill Buffer with BigInt methods
 
 import { QRCodeSVG } from 'qrcode.react';
 

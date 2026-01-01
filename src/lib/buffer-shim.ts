@@ -64,5 +64,16 @@ if (typeof BaseBuffer.prototype.readBigInt64LE !== 'function') {
     };
 }
 
+// Set globally so dynamic imports and lazy-loaded chunks get the polyfilled Buffer
+if (typeof globalThis !== 'undefined') {
+    (globalThis as any).Buffer = BaseBuffer;
+}
+if (typeof window !== 'undefined') {
+    (window as any).Buffer = BaseBuffer;
+}
+if (typeof global !== 'undefined') {
+    (global as any).Buffer = BaseBuffer;
+}
+
 export { BaseBuffer as Buffer };
 export default BaseBuffer;
