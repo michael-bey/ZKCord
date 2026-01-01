@@ -2,12 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Externalize heavy packages from server bundles
-  serverExternalPackages: [
-    "@aztec/bb.js",
-    "@zkpassport/registry",
-    "@zkpassport/utils",
-    "@zkpassport/poseidon2",
-  ],
+  serverExternalPackages: [],
 
   // Only transpile what's necessary
   transpilePackages: ["buffer"],
