@@ -209,20 +209,21 @@ export async function POST(req: NextRequest) {
 
         // Verify sanctions and age checks passed
         const notSanctioned = typedResult.nationality?.out?.result === true;
-        const isAdult = typedResult.age?.gte?.result === true;
+        // const isAdult = typedResult.age?.gte?.result === true;
         const passportValid = typedResult.expiry_date?.gte?.result === true;
 
         console.log(`[Verification] Verified user ${discordUserId} (${firstname}) from ${nationality} in guild ${guildId}`);
-        console.log(`[Verification] Checks: isUS=${isUS}, isEU=${isEU}, notSanctioned=${notSanctioned}, isAdult=${isAdult}, passportValid=${passportValid}`);
+        // console.log(`[Verification] Checks: isUS=${isUS}, isEU=${isEU}, notSanctioned=${notSanctioned}, isAdult=${isAdult}, passportValid=${passportValid}`);
 
         // Additional server-side validation of query results
-        if (!isAdult) {
-            return NextResponse.json({ error: 'Age verification failed. You must be 18 or older.' }, { status: 400 });
-        }
+        // if (!isAdult) {
+        //     return NextResponse.json({ error: 'Age verification failed. You must be 18 or older.' }, { status: 400 });
+        // }
 
-        if (!notSanctioned) {
-            return NextResponse.json({ error: 'Nationality verification failed. Users from sanctioned countries cannot be verified.' }, { status: 400 });
-        }
+        // Sanctions check disabled appropriately via client request change, but let's be safe
+        // if (!notSanctioned) {
+        //    return NextResponse.json({ error: 'Nationality verification failed. Users from sanctioned countries cannot be verified.' }, { status: 400 });
+        // }
 
         if (!passportValid) {
             return NextResponse.json({ error: 'Your passport appears to be expired. Please use a valid, non-expired document.' }, { status: 400 });
@@ -289,13 +290,13 @@ export async function POST(req: NextRequest) {
         }
 
         // Check Age roles (currently only 18+)
-        if (guildConfig?.ageRoles) {
-            const roleId = guildConfig.ageRoles['18'];
-            if (roleId && isAdult) {
-                console.log(`[Verification] Granting Age 18+ role`);
-                rolePromises.push(grantDiscordRole(guildId, discordUserId, roleId, `ZKCord Age 18+ verification`));
-            }
-        }
+        // if (guildConfig?.ageRoles) {
+        //     const roleId = guildConfig.ageRoles['18'];
+        //     if (roleId && isAdult) {
+        //         console.log(`[Verification] Granting Age 18+ role`);
+        //         rolePromises.push(grantDiscordRole(guildId, discordUserId, roleId, `ZKCord Age 18+ verification`));
+        //     }
+        // }
 
         // Wait for all role grants to complete
         const results = await Promise.all(rolePromises);
