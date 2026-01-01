@@ -31,7 +31,6 @@ const nextConfig: NextConfig = {
     resolveAlias: {
       // All imports of 'buffer' should use our polyfilled version
       'buffer': bufferShimPath,
-      'buffer/': bufferShimPath,
     },
   },
 
