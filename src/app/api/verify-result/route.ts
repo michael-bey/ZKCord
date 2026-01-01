@@ -3,13 +3,6 @@ export const dynamic = 'force-dynamic';
 import { getNonce, deleteNonce } from '@/lib/nonce-store';
 import { isIdentifierUsed, markIdentifierAsUsed } from '@/lib/identifier-store';
 
-const EU_COUNTRIES = [
-    'Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czech Republic', 'Czechia',
-    'Denmark', 'Estonia', 'Finland', 'France', 'Germany', 'Greece', 'Hungary',
-    'Ireland', 'Italy', 'Latvia', 'Lithuania', 'Luxembourg', 'Malta', 'Netherlands',
-    'Poland', 'Portugal', 'Romania', 'Slovakia', 'Slovenia', 'Spain', 'Sweden'
-];
-
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const VERIFIED_ROLE_ID = process.env.DISCORD_VERIFIED_ROLE_ID;
 const US_ROLE_ID = process.env.DISCORD_US_ROLE_ID;
@@ -63,7 +56,7 @@ async function grantDiscordRole(guildId: string, userId: string, roleId: string,
 
 export async function POST(req: NextRequest) {
     try {
-        const { nonce, verified, uniqueIdentifier, firstname, nationality } = await req.json();
+        const { nonce, verified, uniqueIdentifier, firstname, isUS, isEU } = await req.json();
 
         if (!nonce || !uniqueIdentifier || verified === undefined) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -108,7 +101,7 @@ export async function POST(req: NextRequest) {
         // Grant roles and wait for completion
         const rolePromises: Promise<{ success: boolean; roleId: string; error?: string }>[] = [];
 
-        console.log(`[Verification] Starting role grants for user ${discordUserId}, nationality: ${nationality}`);
+        console.log(`[Verification] Starting role grants for user ${discordUserId}, isUS: ${isUS}, isEU: ${isEU}`);
         console.log(`[Verification] Available role IDs - Verified: ${VERIFIED_ROLE_ID}, US: ${US_ROLE_ID}, EU: ${EU_ROLE_ID}`);
 
         if (VERIFIED_ROLE_ID) {
@@ -117,24 +110,14 @@ export async function POST(req: NextRequest) {
             console.warn('[Verification] DISCORD_VERIFIED_ROLE_ID is not set!');
         }
 
-        // Normalize nationality for matching
-        const normalizedNationality = typeof nationality === 'string' ? nationality.toUpperCase().trim() : '';
-        console.log(`[Verification] Normalized nationality: "${normalizedNationality}"`);
-
-        // US matching - handle various formats: "USA", "US", "United States", "UNITED STATES OF AMERICA", etc.
-        const isUS = ['USA', 'US', 'UNITED STATES', 'UNITED STATES OF AMERICA', 'AMERICAN'].includes(normalizedNationality);
-
-        if (US_ROLE_ID && isUS) {
-            console.log(`[Verification] Matched US nationality`);
+        // Use boolean flags from SDK's .in() check
+        if (US_ROLE_ID && isUS === true) {
+            console.log(`[Verification] Granting US role`);
             rolePromises.push(grantDiscordRole(guildId, discordUserId, US_ROLE_ID, 'ZKCord US citizenship verification'));
         }
 
-        // EU matching - normalize the check
-        const EU_COUNTRIES_UPPER = EU_COUNTRIES.map(c => c.toUpperCase());
-        const isEU = EU_COUNTRIES_UPPER.includes(normalizedNationality);
-
-        if (EU_ROLE_ID && isEU) {
-            console.log(`[Verification] Matched EU nationality`);
+        if (EU_ROLE_ID && isEU === true) {
+            console.log(`[Verification] Granting EU role`);
             rolePromises.push(grantDiscordRole(guildId, discordUserId, EU_ROLE_ID, 'ZKCord EU citizenship verification'));
         }
 

@@ -112,7 +112,7 @@ function VerifyContent() {
                     console.log('[ZKCord] Buffer BigInt methods patched');
                 }
 
-                const { ZKPassport } = await import('@zkpassport/sdk');
+                const { ZKPassport, EU_COUNTRIES } = await import('@zkpassport/sdk');
                 const zkPassport = new ZKPassport();
                 const queryBuilder = await zkPassport.request({
                     name: 'ZKCord',
@@ -122,10 +122,14 @@ function VerifyContent() {
                     devMode: false,
                 });
 
+                // Use .in() for nationality checks - returns boolean result instead of raw string
+                const US_COUNTRIES = ['United States'] as const;
+
                 const { url, onResult, onError, onRequestReceived, onGeneratingProof, onBridgeConnect, onReject, onProofGenerated } = queryBuilder
                     .gte('age', 18)
                     .disclose('firstname')
-                    .disclose('nationality')
+                    .in('nationality', US_COUNTRIES)  // Check if US citizen (boolean)
+                    .in('nationality', EU_COUNTRIES)  // Check if EU citizen (boolean)
                     .done();
 
                 setVerifyUrl(url);
@@ -156,10 +160,18 @@ function VerifyContent() {
                 });
 
                 onResult(async ({ verified, result, uniqueIdentifier }) => {
-                    console.log('🏁 Result received:', { verified, uniqueIdentifier });
+                    console.log('🏁 Result received:', { verified, uniqueIdentifier, result });
                     if (verified) {
                         setStatus('verifying');
                         try {
+                            // Extract boolean results from .in() checks
+                            // The result structure has nationality.in as an array of results
+                            const nationalityResults = result.nationality?.in || [];
+                            const isUS = nationalityResults[0]?.result === true;  // First .in() was US_COUNTRIES
+                            const isEU = nationalityResults[1]?.result === true;  // Second .in() was EU_COUNTRIES
+
+                            console.log('🌍 Nationality results:', { isUS, isEU, nationalityResults });
+
                             const response = await fetch('/api/verify-result', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -168,7 +180,8 @@ function VerifyContent() {
                                     verified,
                                     uniqueIdentifier,
                                     firstname: result.firstname?.disclose?.result,
-                                    nationality: result.nationality?.disclose?.result,
+                                    isUS,
+                                    isEU,
                                 }),
                             });
 
