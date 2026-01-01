@@ -47,6 +47,30 @@ export async function POST(req: NextRequest) {
             console.log('🚪 Handling /portal command');
             return handlePortal(interaction);
         }
+        if (interaction.data.name === 'add-country-role') {
+            console.log('🌍 Handling /add-country-role');
+            return handleAddCountryRole(interaction);
+        }
+        if (interaction.data.name === 'remove-country-role') {
+            console.log('🔥 Handling /remove-country-role');
+            return handleRemoveCountryRole(interaction);
+        }
+        if (interaction.data.name === 'list-roles') {
+            console.log('📋 Handling /list-roles');
+            return handleListRoles(interaction);
+        }
+        if (interaction.data.name === 'add-gender-role') {
+            return handleAddGenderRole(interaction);
+        }
+        if (interaction.data.name === 'remove-gender-role') {
+            return handleRemoveGenderRole(interaction);
+        }
+        if (interaction.data.name === 'add-age-role') {
+            return handleAddAgeRole(interaction);
+        }
+        if (interaction.data.name === 'remove-age-role') {
+            return handleRemoveAgeRole(interaction);
+        }
     }
 
     if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
@@ -58,6 +82,240 @@ export async function POST(req: NextRequest) {
 
     console.warn('⚠️ Unknown interaction type or data:', interaction.data);
     return NextResponse.json({ error: 'Unknown interaction type' }, { status: 400 });
+}
+
+// ... existing country role handlers ...
+
+async function handleListRoles(interaction: any) {
+    const guildId = interaction.guild_id;
+    if (!guildId) return serverOnly();
+
+    const config = await getGuildConfig(guildId);
+    const countryRoles = config?.countryRoles || {};
+    const genderRoles = config?.genderRoles || {};
+    const ageRoles = config?.ageRoles || {};
+
+    let msg = '**🌍 Configured Roles:**\n\n';
+
+    // Countries
+    msg += '**Countries/Regions:**\n';
+    if (Object.keys(countryRoles).length === 0) {
+        msg += '_None configured._\n';
+    } else {
+        for (const [country, roleId] of Object.entries(countryRoles)) {
+            msg += `• **${country}**: <@&${roleId}>\n`;
+        }
+    }
+
+    // Gender
+    msg += '\n**Gender:**\n';
+    if (Object.keys(genderRoles).length === 0) {
+        msg += '_None configured._\n';
+    } else {
+        for (const [gender, roleId] of Object.entries(genderRoles)) {
+            msg += `• **${gender === 'M' ? 'Male' : 'Female'}**: <@&${roleId}>\n`;
+        }
+    }
+
+    // Age
+    msg += '\n**Age:**\n';
+    if (Object.keys(ageRoles).length === 0) {
+        msg += '_None configured._\n';
+    } else {
+        for (const [age, roleId] of Object.entries(ageRoles)) {
+            msg += `• **${age}+**: <@&${roleId}>\n`;
+        }
+    }
+
+    return NextResponse.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { content: msg, flags: 64 }
+    });
+}
+
+async function handleAddCountryRole(interaction: any) {
+    const guildId = interaction.guild_id;
+    if (!guildId) return serverOnly();
+
+    const country = interaction.data.options.find((o: any) => o.name === 'country')?.value;
+    const roleId = interaction.data.options.find((o: any) => o.name === 'role')?.value;
+
+    if (!country || !roleId) {
+        return NextResponse.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: '❌ Missing country or role.', flags: 64 }
+        });
+    }
+
+    // Normalize country to uppercase
+    const normalizedCountry = country.toUpperCase().trim();
+
+    const config = await getGuildConfig(guildId) || {};
+    const countryRoles = config.countryRoles || {};
+    countryRoles[normalizedCountry] = roleId;
+
+    await updateGuildConfig(guildId, { countryRoles });
+
+    return NextResponse.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+            content: `✅ Linked **${normalizedCountry}** to role <@&${roleId}>.`,
+            flags: 64
+        }
+    });
+}
+
+async function handleRemoveCountryRole(interaction: any) {
+    const guildId = interaction.guild_id;
+    if (!guildId) return serverOnly();
+
+    const country = interaction.data.options.find((o: any) => o.name === 'country')?.value;
+    if (!country) return NextResponse.json({ type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE, data: { content: '❌ Missing country.', flags: 64 } });
+
+    const normalizedCountry = country.toUpperCase().trim();
+    const config = await getGuildConfig(guildId) || {};
+    const countryRoles = config.countryRoles || {};
+
+    if (!countryRoles[normalizedCountry]) {
+        return NextResponse.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: `⚠️ No role configured for **${normalizedCountry}**.`, flags: 64 }
+        });
+    }
+
+    delete countryRoles[normalizedCountry];
+    await updateGuildConfig(guildId, { countryRoles });
+
+    return NextResponse.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { content: `✅ Removed role link for **${normalizedCountry}**.`, flags: 64 }
+    });
+}
+
+async function handleAddGenderRole(interaction: any) {
+    const guildId = interaction.guild_id;
+    if (!guildId) return serverOnly();
+
+    const gender = interaction.data.options.find((o: any) => o.name === 'gender')?.value;
+    const roleId = interaction.data.options.find((o: any) => o.name === 'role')?.value;
+
+    if (!gender || !roleId) {
+        return NextResponse.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: '❌ Missing gender or role.', flags: 64 }
+        });
+    }
+
+    const config = await getGuildConfig(guildId) || {};
+    const genderRoles = config.genderRoles || {};
+    genderRoles[gender] = roleId;
+
+    await updateGuildConfig(guildId, { genderRoles });
+
+    return NextResponse.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+            content: `✅ Linked Gender **${gender === 'M' ? 'Male' : 'Female'}** to role <@&${roleId}>.`,
+            flags: 64
+        }
+    });
+}
+
+async function handleRemoveGenderRole(interaction: any) {
+    const guildId = interaction.guild_id;
+    if (!guildId) return serverOnly();
+
+    const gender = interaction.data.options.find((o: any) => o.name === 'gender')?.value;
+    if (!gender) return NextResponse.json({ type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE, data: { content: '❌ Missing gender.', flags: 64 } });
+
+    const config = await getGuildConfig(guildId) || {};
+    const genderRoles = config.genderRoles || {};
+
+    if (!genderRoles[gender]) {
+        return NextResponse.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: `⚠️ No role configured for **${gender === 'M' ? 'Male' : 'Female'}**.`, flags: 64 }
+        });
+    }
+
+    delete genderRoles[gender];
+    await updateGuildConfig(guildId, { genderRoles });
+
+    return NextResponse.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { content: `✅ Removed role link for **${gender === 'M' ? 'Male' : 'Female'}**.`, flags: 64 }
+    });
+}
+
+async function handleAddAgeRole(interaction: any) {
+    const guildId = interaction.guild_id;
+    if (!guildId) return serverOnly();
+
+    const minAge = interaction.data.options.find((o: any) => o.name === 'minimum_age')?.value;
+    const roleId = interaction.data.options.find((o: any) => o.name === 'role')?.value;
+
+    if (!minAge || !roleId) {
+        return NextResponse.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: '❌ Missing age or role.', flags: 64 }
+        });
+    }
+
+    // Currently only supporting 18+
+    if (minAge !== 18) {
+        return NextResponse.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: '❌ Currently only 18+ age verification is supported.', flags: 64 }
+        });
+    }
+
+    const config = await getGuildConfig(guildId) || {};
+    const ageRoles = config.ageRoles || {};
+    ageRoles[minAge.toString()] = roleId;
+
+    await updateGuildConfig(guildId, { ageRoles });
+
+    return NextResponse.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+            content: `✅ Linked Age **${minAge}+** to role <@&${roleId}>.`,
+            flags: 64
+        }
+    });
+}
+
+async function handleRemoveAgeRole(interaction: any) {
+    const guildId = interaction.guild_id;
+    if (!guildId) return serverOnly();
+
+    const minAge = interaction.data.options.find((o: any) => o.name === 'minimum_age')?.value;
+    if (!minAge) return NextResponse.json({ type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE, data: { content: '❌ Missing age.', flags: 64 } });
+
+    const key = minAge.toString();
+    const config = await getGuildConfig(guildId) || {};
+    const ageRoles = config.ageRoles || {};
+
+    if (!ageRoles[key]) {
+        return NextResponse.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: `⚠️ No role configured for **${minAge}+**.`, flags: 64 }
+        });
+    }
+
+    delete ageRoles[key];
+    await updateGuildConfig(guildId, { ageRoles });
+
+    return NextResponse.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { content: `✅ Removed role link for **${minAge}+**.`, flags: 64 }
+    });
+}
+
+function serverOnly() {
+    return NextResponse.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { content: '❌ This command can only be used in a server.', flags: 64 }
+    });
 }
 
 async function handleSetup(interaction: any) {

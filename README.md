@@ -51,7 +51,12 @@ Once the bot is invited to your server:
     ```
     /portal
     ```
-3.  **Done!** Users can now verify themselves.
+3.  **Add Country Rules (Optional)**: Link specific countries or regions to roles.
+    ```
+    /add-country-role country:Brazil role:@Brazilian
+    /add-country-role country:ASIA role:@Asia Team
+    ```
+4.  **Done!** Users can now verify themselves.
 
 1. Install dependencies:
    ```bash

@@ -58,7 +58,7 @@ export default function AdminGuide() {
                             <div className="code-block">
                                 <code>/setup verified_role:@Verified portal_channel:#verify</code>
                             </div>
-                            <p className="note">You can also configure <code>us_role</code> and <code>eu_role</code> if needed.</p>
+                            <p className="note">You can also configure Country roles using <code>/add-country-role</code>.</p>
                         </div>
                     </div>
 
@@ -66,6 +66,38 @@ export default function AdminGuide() {
 
                     <div className="step">
                         <div className="step-number">3</div>
+                        <div className="step-content">
+                            <h3>Add Country Rules</h3>
+                            <p>Link specific countries or regions to roles (Optional).</p>
+                            <div className="code-block">
+                                <code>/add-country-role country:Brazil role:@Brazilian</code>
+                            </div>
+                            <div className="code-block">
+                                <code>/add-country-role country:LATAM role:@Latino</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="step-divider"></div>
+
+                    <div className="step">
+                        <div className="step-number">4</div>
+                        <div className="step-content">
+                            <h3>Extended Verification</h3>
+                            <p>Verify gender and age attributes (Optional).</p>
+                            <div className="code-block">
+                                <code>/add-gender-role gender:Male role:@Gentlemen</code>
+                            </div>
+                            <div className="code-block">
+                                <code>/add-age-role minimum_age:18+ role:@Adult</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="step-divider"></div>
+
+                    <div className="step">
+                        <div className="step-number">5</div>
                         <div className="step-content">
                             <h3>Launch Portal</h3>
                             <p>Run <code>/portal</code> to post the verification panel.</p>

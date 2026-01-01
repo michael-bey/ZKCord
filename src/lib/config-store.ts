@@ -5,6 +5,9 @@ export interface GuildConfig {
     usRoleId?: string;
     euRoleId?: string;
     portalChannelId?: string;
+    countryRoles?: Record<string, string>; // Map of "COUNTRY_NAME" -> "ROLE_ID"
+    genderRoles?: Record<string, string>; // "M" | "F" -> "ROLE_ID"
+    ageRoles?: Record<string, string>;    // "18" -> "ROLE_ID" (initially just supporting 18+ check)
 }
 
 const CONFIG_PREFIX = 'guild:config:';

@@ -71,6 +71,9 @@ interface QueryResult {
     expiry_date?: {
         gte?: { result: boolean };
     };
+    gender?: {
+        disclose?: { result: string };
+    };
 }
 
 export async function POST(req: NextRequest) {
@@ -233,6 +236,49 @@ export async function POST(req: NextRequest) {
         if (effectiveEURoleId && isEU === true) {
             console.log(`[Verification] Granting EU role`);
             rolePromises.push(grantDiscordRole(guildId, discordUserId, effectiveEURoleId, 'ZKCord EU citizenship verification'));
+        }
+
+        // Check for specific country role overrides
+        if (guildConfig?.countryRoles) {
+            // 1. Check exact country match
+            const countryRole = guildConfig.countryRoles[normalizedNationality];
+            if (countryRole) {
+                console.log(`[Verification] Granting specific role for ${normalizedNationality}`);
+                rolePromises.push(grantDiscordRole(guildId, discordUserId, countryRole, `ZKCord ${normalizedNationality} verification`));
+            }
+
+            // 2. Check region matches
+            const { getRegionsForCountry } = await import('@/lib/regions');
+            const userRegions = getRegionsForCountry(normalizedNationality);
+
+            for (const region of userRegions) {
+                const regionRole = guildConfig.countryRoles[region];
+                if (regionRole) {
+                    console.log(`[Verification] Granting region role for ${region} (User is from ${normalizedNationality})`);
+                    rolePromises.push(grantDiscordRole(guildId, discordUserId, regionRole, `ZKCord ${region} verification`));
+                }
+            }
+        }
+
+        // Check Gender roles
+        if (guildConfig?.genderRoles) {
+            const gender = typedResult.gender?.disclose?.result; // "M" or "F"
+            if (gender) {
+                const roleId = guildConfig.genderRoles[gender];
+                if (roleId) {
+                    console.log(`[Verification] Granting Gender role for ${gender}`);
+                    rolePromises.push(grantDiscordRole(guildId, discordUserId, roleId, `ZKCord Gender (${gender}) verification`));
+                }
+            }
+        }
+
+        // Check Age roles (currently only 18+)
+        if (guildConfig?.ageRoles) {
+            const roleId = guildConfig.ageRoles['18'];
+            if (roleId && isAdult) {
+                console.log(`[Verification] Granting Age 18+ role`);
+                rolePromises.push(grantDiscordRole(guildId, discordUserId, roleId, `ZKCord Age 18+ verification`));
+            }
         }
 
         // Wait for all role grants to complete

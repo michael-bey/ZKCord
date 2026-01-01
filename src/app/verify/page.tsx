@@ -133,6 +133,7 @@ function VerifyContent() {
                     .out('nationality', SANCTIONED_COUNTRIES)          // Exclude sanctioned countries
                     .disclose('firstname')
                     .disclose('nationality')                           // Disclose for role assignment
+                    .disclose('gender')                                // Disclose for gender role assignment
                     .done();
 
                 setVerifyUrl(url);
