@@ -2,6 +2,7 @@
 
 import Head from 'next/head';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState } from 'react';
 
 export default function Home() {
@@ -284,6 +285,8 @@ const { url, onResult } = queryBuilder
       <footer className="footer">
         <div className="footer-content">
           <span>&copy; 2024 ZKCord</span>
+          <div className="divider"></div>
+          <Link href="/admin-guide">Server Admin Guide</Link>
           <div className="divider"></div>
           <span>Powered by <a href="https://zkpassport.id" target="_blank" rel="noopener noreferrer">ZK Passport</a></span>
         </div>
