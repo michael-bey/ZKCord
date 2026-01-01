@@ -123,7 +123,7 @@ function VerifyContent() {
                 });
 
                 // Define country groups for role assignment
-                const US_COUNTRIES = ['United States'] as const;
+                const US_COUNTRIES = ['United States'];
 
                 // Collect proofs for server-side verification
                 const collectedProofs: unknown[] = [];
