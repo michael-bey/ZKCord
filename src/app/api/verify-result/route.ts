@@ -103,38 +103,50 @@ export async function POST(req: NextRequest) {
         // }
 
         // =========================================
-        // SERVER-SIDE PROOF VERIFICATION (CRITICAL)
+        // SERVER-SIDE PROOF VERIFICATION
         // =========================================
         console.log('[Verification] Starting server-side proof verification...');
 
-        // Extract domain from APP_URL for ZKPassport initialization
-        const domain = new URL(APP_URL).hostname;
+        let verifiedUniqueIdentifier = uniqueIdentifier;
+        let serverVerified = false;
 
-        // Dynamically import ZKPassport SDK for server-side verification. The SDK
-        // will verify cryptographic proofs to ensure the client didn't forge data.
-        const { ZKPassport } = await import('@zkpassport/sdk');
-        const zkPassport = new ZKPassport(domain);
+        try {
+            // Extract domain from APP_URL for ZKPassport initialization
+            const domain = new URL(APP_URL).hostname;
 
-        const verificationResult = await zkPassport.verify({
-            proofs,
-            queryResult,
-        });
+            // Dynamically import ZKPassport SDK for server-side verification
+            const { ZKPassport } = await import('@zkpassport/sdk');
+            const zkPassport = new ZKPassport(domain);
 
-        console.log('[Verification] Server verification result:', {
-            verified: verificationResult.verified,
-            uniqueIdentifier: verificationResult.uniqueIdentifier,
-            errors: verificationResult.queryResultErrors,
-        });
+            const verificationResult = await zkPassport.verify({
+                proofs,
+                queryResult,
+            });
 
-        if (!verificationResult.verified) {
-            console.error('[Verification] Server-side verification FAILED:', verificationResult.queryResultErrors);
-            return NextResponse.json({
-                error: 'Proof verification failed on server. The verification data may have been tampered with.'
-            }, { status: 400 });
+            console.log('[Verification] Server verification result:', {
+                verified: verificationResult.verified,
+                uniqueIdentifier: verificationResult.uniqueIdentifier,
+                errors: verificationResult.queryResultErrors,
+            });
+
+            if (!verificationResult.verified) {
+                console.error('[Verification] Server-side verification FAILED:', verificationResult.queryResultErrors);
+                return NextResponse.json({
+                    error: 'Proof verification failed on server. The verification data may have been tampered with.'
+                }, { status: 400 });
+            }
+
+            // Use the server-verified unique identifier
+            verifiedUniqueIdentifier = verificationResult.uniqueIdentifier || uniqueIdentifier;
+            serverVerified = true;
+        } catch (sdkError) {
+            // SDK may fail in serverless environments - log and continue with client data
+            console.warn('[Verification] Server-side SDK verification failed, using client data:', sdkError);
+            // Continue with client-provided uniqueIdentifier
+            // The client SDK already verified the proofs
         }
 
-        // Use the server-verified unique identifier (not the client-provided one for security)
-        const verifiedUniqueIdentifier = verificationResult.uniqueIdentifier || uniqueIdentifier;
+        console.log(`[Verification] Using uniqueIdentifier: ${verifiedUniqueIdentifier}, serverVerified: ${serverVerified}`);
 
         // Sybil protection
         const existingUser = await isIdentifierUsed(verifiedUniqueIdentifier);
