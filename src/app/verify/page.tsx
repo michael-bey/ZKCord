@@ -318,7 +318,7 @@ function VerifyContent() {
                     <div className="success-message animate-slide-up">
                         <div className="icon">✅</div>
                         <h2>Verified Successfully</h2>
-                        <p>Your roles have been granted. You can now close this window and return to Discord.</p>
+                        <p className="success-text">Your roles have been granted. You can now close this window and return to Discord.</p>
                         <button className="btn-close" onClick={() => window.close()}>Close Window</button>
                     </div>
                 )}
@@ -327,7 +327,7 @@ function VerifyContent() {
                     <div className="error-message animate-slide-up">
                         <div className="icon">⚠️</div>
                         <h2>Verification Error</h2>
-                        <p>{error}</p>
+                        <p className="error-text">{error}</p>
                         <button className="btn-retry" onClick={() => window.location.reload()}>Retry Verification</button>
                     </div>
                 )}
@@ -462,6 +462,20 @@ function VerifyContent() {
                 .btn-primary:hover, .btn-close:hover, .btn-retry:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+                }
+
+                .success-message h2, .error-message h2 {
+                    margin-bottom: 1rem;
+                }
+
+                .success-text, .error-text {
+                    color: rgba(255, 255, 255, 0.7);
+                    line-height: 1.5;
+                    margin-bottom: 2rem;
+                }
+
+                .success-message .btn-close, .error-message .btn-retry {
+                    margin-top: 0.5rem;
                 }
 
                 .username-badge {

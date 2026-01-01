@@ -15,19 +15,31 @@ const VERIFIED_ROLE_ID = process.env.DISCORD_VERIFIED_ROLE_ID;
 const US_ROLE_ID = process.env.DISCORD_US_ROLE_ID;
 const EU_ROLE_ID = process.env.DISCORD_EU_ROLE_ID;
 
-async function grantDiscordRole(guildId: string, userId: string, roleId: string, reason: string) {
+async function grantDiscordRole(guildId: string, userId: string, roleId: string, reason: string): Promise<{ success: boolean; roleId: string; error?: string }> {
     const url = `https://discord.com/api/v10/guilds/${guildId}/members/${userId}/roles/${roleId}`;
-    const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `Bot ${DISCORD_TOKEN}`,
-            'X-Audit-Log-Reason': reason,
-        },
-    });
+    console.log(`[Role Grant] Attempting to grant role ${roleId} to user ${userId} in guild ${guildId}`);
 
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Discord API error: ${response.status} ${error}`);
+    try {
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bot ${DISCORD_TOKEN}`,
+                'X-Audit-Log-Reason': reason,
+            },
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            console.error(`[Role Grant] Failed for role ${roleId}: ${response.status} ${error}`);
+            return { success: false, roleId, error: `${response.status}: ${error}` };
+        }
+
+        console.log(`[Role Grant] Successfully granted role ${roleId}`);
+        return { success: true, roleId };
+    } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`[Role Grant] Exception for role ${roleId}: ${errorMsg}`);
+        return { success: false, roleId, error: errorMsg };
     }
 }
 
@@ -75,25 +87,51 @@ export async function POST(req: NextRequest) {
         // Mark identifier as used early to prevent parallel races
         await markIdentifierAsUsed(uniqueIdentifier, discordUserId);
 
-        // Grant roles...
-        const responses = [];
+        // Grant roles and wait for completion
+        const rolePromises: Promise<{ success: boolean; roleId: string; error?: string }>[] = [];
+
+        console.log(`[Verification] Starting role grants for user ${discordUserId}, nationality: ${nationality}`);
+        console.log(`[Verification] Available role IDs - Verified: ${VERIFIED_ROLE_ID}, US: ${US_ROLE_ID}, EU: ${EU_ROLE_ID}`);
 
         if (VERIFIED_ROLE_ID) {
-            responses.push(grantDiscordRole(guildId, discordUserId, VERIFIED_ROLE_ID, 'ZKCord verification successful'));
+            rolePromises.push(grantDiscordRole(guildId, discordUserId, VERIFIED_ROLE_ID, 'ZKCord verification successful'));
+        } else {
+            console.warn('[Verification] DISCORD_VERIFIED_ROLE_ID is not set!');
         }
 
         if (US_ROLE_ID && nationality === 'United States') {
-            responses.push(grantDiscordRole(guildId, discordUserId, US_ROLE_ID, 'ZKCord US citizenship verification'));
+            rolePromises.push(grantDiscordRole(guildId, discordUserId, US_ROLE_ID, 'ZKCord US citizenship verification'));
         }
 
         if (EU_ROLE_ID && typeof nationality === 'string' && EU_COUNTRIES.includes(nationality)) {
-            responses.push(grantDiscordRole(guildId, discordUserId, EU_ROLE_ID, 'ZKCord EU citizenship verification'));
+            rolePromises.push(grantDiscordRole(guildId, discordUserId, EU_ROLE_ID, 'ZKCord EU citizenship verification'));
         }
 
-        // We run role grants in parallel and don't block the response, but we catch errors
-        Promise.all(responses).catch(err => console.error('Role Grant Error:', err));
+        // Wait for all role grants to complete
+        const results = await Promise.all(rolePromises);
 
-        return NextResponse.json({ success: true });
+        const failedRoles = results.filter(r => !r.success);
+        const successRoles = results.filter(r => r.success);
+
+        console.log(`[Verification] Role grant results: ${successRoles.length} succeeded, ${failedRoles.length} failed`);
+
+        if (failedRoles.length > 0) {
+            console.error('[Verification] Failed roles:', failedRoles);
+            // Still return success if at least one role was granted
+            if (successRoles.length > 0) {
+                return NextResponse.json({
+                    success: true,
+                    warning: `Some roles could not be granted: ${failedRoles.map(r => r.error).join(', ')}`,
+                    rolesGranted: successRoles.length
+                });
+            } else {
+                return NextResponse.json({
+                    error: `Failed to grant roles: ${failedRoles.map(r => r.error).join(', ')}`
+                }, { status: 500 });
+            }
+        }
+
+        return NextResponse.json({ success: true, rolesGranted: successRoles.length });
     } catch (error) {
         console.error('API Error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
