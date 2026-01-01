@@ -7,8 +7,7 @@
     "build": "next build --webpack && npm run bot",
     "start": "next start",
     "lint": "eslint",
-    "bot": "tsx src/bot/index.ts",
-    "portal": "tsx src/bot/post-portal.ts"
+    "bot": "tsx src/bot/index.ts"
   },
   "dependencies": {
     "@upstash/redis": "^1.36.0",

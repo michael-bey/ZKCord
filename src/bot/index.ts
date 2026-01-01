@@ -8,13 +8,7 @@ if (!DISCORD_TOKEN || !DISCORD_CLIENT_ID) {
     process.exit(0);
 }
 
-const commands = [
-    {
-        name: 'verify',
-        description: 'Privately verify your age & nationality using ZK proofs — no ID upload required',
-        type: 1, // CHAT_INPUT
-    },
-];
+import { commands } from './commands';
 
 async function registerCommands() {
     console.log('Registering slash commands...');

@@ -98,6 +98,15 @@ export async function POST(req: NextRequest) {
 
         const { discordUserId, guildId } = nonceData;
 
+        // Fetch guild configuration
+        const { getGuildConfig } = await import('@/lib/config-store');
+        const guildConfig = guildId ? await getGuildConfig(guildId) : null;
+
+        // Determine effective role IDs (Config > Env)
+        const effectiveVerifiedRoleId = guildConfig?.verifiedRoleId || process.env.DISCORD_VERIFIED_ROLE_ID;
+        const effectiveUSRoleId = guildConfig?.usRoleId || process.env.DISCORD_US_ROLE_ID;
+        const effectiveEURoleId = guildConfig?.euRoleId || process.env.DISCORD_EU_ROLE_ID;
+
         // Rate limiting to prevent abuse
         const { checkRateLimit } = await import('@/lib/rate-limit');
         const rateLimit = await checkRateLimit(`result:${discordUserId}`, 3, 3600);
@@ -207,23 +216,23 @@ export async function POST(req: NextRequest) {
         const rolePromises: Promise<{ success: boolean; roleId: string; error?: string }>[] = [];
 
         console.log(`[Verification] Starting role grants for user ${discordUserId}, isUS: ${isUS}, isEU: ${isEU}`);
-        console.log(`[Verification] Available role IDs - Verified: ${VERIFIED_ROLE_ID}, US: ${US_ROLE_ID}, EU: ${EU_ROLE_ID}`);
+        console.log(`[Verification] Available role IDs - Verified: ${effectiveVerifiedRoleId}, US: ${effectiveUSRoleId}, EU: ${effectiveEURoleId}`);
 
-        if (VERIFIED_ROLE_ID) {
-            rolePromises.push(grantDiscordRole(guildId, discordUserId, VERIFIED_ROLE_ID, 'ZKCord verification successful'));
+        if (effectiveVerifiedRoleId) {
+            rolePromises.push(grantDiscordRole(guildId, discordUserId, effectiveVerifiedRoleId, 'ZKCord verification successful'));
         } else {
-            console.warn('[Verification] DISCORD_VERIFIED_ROLE_ID is not set!');
+            console.warn('[Verification] No Verified Role configured for this guild.');
         }
 
         // Use server-verified boolean flags
-        if (US_ROLE_ID && isUS === true) {
+        if (effectiveUSRoleId && isUS === true) {
             console.log(`[Verification] Granting US role`);
-            rolePromises.push(grantDiscordRole(guildId, discordUserId, US_ROLE_ID, 'ZKCord US citizenship verification'));
+            rolePromises.push(grantDiscordRole(guildId, discordUserId, effectiveUSRoleId, 'ZKCord US citizenship verification'));
         }
 
-        if (EU_ROLE_ID && isEU === true) {
+        if (effectiveEURoleId && isEU === true) {
             console.log(`[Verification] Granting EU role`);
-            rolePromises.push(grantDiscordRole(guildId, discordUserId, EU_ROLE_ID, 'ZKCord EU citizenship verification'));
+            rolePromises.push(grantDiscordRole(guildId, discordUserId, effectiveEURoleId, 'ZKCord EU citizenship verification'));
         }
 
         // Wait for all role grants to complete
