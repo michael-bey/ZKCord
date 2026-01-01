@@ -152,6 +152,7 @@ export async function POST(req: NextRequest) {
                 proofs,
                 queryResult,
                 scope: 'zkcord-verification',
+                domain: domain,
                 writingDirectory: '/tmp', // Required for Vercel serverless environment
             });
 
@@ -161,7 +162,7 @@ export async function POST(req: NextRequest) {
                 console.error('[Verification] Server-side verification FAILED:', verificationResult.queryResultErrors);
                 return NextResponse.json({
                     error: 'Proof verification failed on server.',
-                    details: verificationResult.queryResultErrors,
+                    verificationResult: verificationResult,
                     debug: {
                         serverDomain: domain,
                         requestHost: req.headers.get('host'),
