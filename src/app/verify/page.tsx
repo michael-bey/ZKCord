@@ -123,7 +123,8 @@ function VerifyContent() {
                 });
 
                 // Define country groups for role assignment
-                const US_COUNTRIES = ['United States'];
+                // Type assertion needed as SDK expects specific country literals
+                const US_COUNTRIES: ('United States')[] = ['United States'];
 
                 // Collect proofs for server-side verification
                 const collectedProofs: unknown[] = [];
