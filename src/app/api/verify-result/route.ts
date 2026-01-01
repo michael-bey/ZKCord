@@ -161,7 +161,13 @@ export async function POST(req: NextRequest) {
             if (!verificationResult.verified) {
                 console.error('[Verification] Server-side verification FAILED:', verificationResult.queryResultErrors);
                 return NextResponse.json({
-                    error: 'Proof verification failed on server. The verification data may have been tampered with.'
+                    error: 'Proof verification failed on server.',
+                    details: verificationResult.queryResultErrors,
+                    debug: {
+                        serverDomain: domain,
+                        requestHost: req.headers.get('host'),
+                        origin: req.headers.get('origin')
+                    }
                 }, { status: 400 });
             }
 
