@@ -148,6 +148,10 @@ export async function POST(req: NextRequest) {
             const { ZKPassport } = await import('@zkpassport/sdk');
             const zkPassport = new ZKPassport(domain);
 
+            console.log('[Verification Debug] Domain:', domain);
+            console.log('[Verification Debug] QueryResult:', JSON.stringify(queryResult, null, 2));
+            console.log('[Verification Debug] Proofs count:', proofs.length);
+
             const verificationResult = await zkPassport.verify({
                 proofs,
                 queryResult,
