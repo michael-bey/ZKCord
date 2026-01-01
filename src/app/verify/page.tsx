@@ -130,7 +130,7 @@ function VerifyContent() {
                 const { url, onResult, onError, onRequestReceived, onGeneratingProof, onBridgeConnect, onReject, onProofGenerated } = queryBuilder
                     .gte('age', 18)                                    // Must be 18+
                     .gte('expiry_date', new Date())                    // Passport must not be expired
-                    .out('nationality', SANCTIONED_COUNTRIES)          // Exclude sanctioned countries
+                    // .out('nationality', SANCTIONED_COUNTRIES)          // Exclude sanctioned countries
                     .disclose('firstname')
                     .disclose('nationality')                           // Disclose for role assignment
                     .disclose('gender')                                // Disclose for gender role assignment
