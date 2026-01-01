@@ -151,13 +151,11 @@ export async function POST(req: NextRequest) {
             const verificationResult = await zkPassport.verify({
                 proofs,
                 queryResult,
+                scope: 'zkcord-verification',
+                writingDirectory: '/tmp', // Required for Vercel serverless environment
             });
 
-            console.log('[Verification] Server verification result:', {
-                verified: verificationResult.verified,
-                uniqueIdentifier: verificationResult.uniqueIdentifier,
-                errors: verificationResult.queryResultErrors,
-            });
+            console.log('[Verification] Server verification result:', JSON.stringify(verificationResult, null, 2));
 
             if (!verificationResult.verified) {
                 console.error('[Verification] Server-side verification FAILED:', verificationResult.queryResultErrors);
