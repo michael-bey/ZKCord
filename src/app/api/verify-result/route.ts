@@ -117,11 +117,24 @@ export async function POST(req: NextRequest) {
             console.warn('[Verification] DISCORD_VERIFIED_ROLE_ID is not set!');
         }
 
-        if (US_ROLE_ID && nationality === 'United States') {
+        // Normalize nationality for matching
+        const normalizedNationality = typeof nationality === 'string' ? nationality.toUpperCase().trim() : '';
+        console.log(`[Verification] Normalized nationality: "${normalizedNationality}"`);
+
+        // US matching - handle various formats: "USA", "US", "United States", "UNITED STATES OF AMERICA", etc.
+        const isUS = ['USA', 'US', 'UNITED STATES', 'UNITED STATES OF AMERICA', 'AMERICAN'].includes(normalizedNationality);
+
+        if (US_ROLE_ID && isUS) {
+            console.log(`[Verification] Matched US nationality`);
             rolePromises.push(grantDiscordRole(guildId, discordUserId, US_ROLE_ID, 'ZKCord US citizenship verification'));
         }
 
-        if (EU_ROLE_ID && typeof nationality === 'string' && EU_COUNTRIES.includes(nationality)) {
+        // EU matching - normalize the check
+        const EU_COUNTRIES_UPPER = EU_COUNTRIES.map(c => c.toUpperCase());
+        const isEU = EU_COUNTRIES_UPPER.includes(normalizedNationality);
+
+        if (EU_ROLE_ID && isEU) {
+            console.log(`[Verification] Matched EU nationality`);
             rolePromises.push(grantDiscordRole(guildId, discordUserId, EU_ROLE_ID, 'ZKCord EU citizenship verification'));
         }
 
