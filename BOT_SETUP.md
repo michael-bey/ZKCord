@@ -67,7 +67,7 @@ https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=26
 3. **Create Verification Channel**:
    - Create a `#verify` channel
    - Only allow @everyone to view (no send messages)
-   - Run `npm run portal` to post the verification embed
+   - Run `/portal` in Discord to post the verification embed
 
 4. **Lock Other Channels**:
    - Remove @everyone permissions from other channels

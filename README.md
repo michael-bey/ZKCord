@@ -39,7 +39,19 @@ ZKCord is a secure, privacy-first solution for Discord communities that need to 
    ```
 2. Fill in your Discord bot credentials and role IDs.
 
-### Running the App
+### Server Admin Quickstart
+
+Once the bot is invited to your server:
+
+1.  **Configure Roles**: Run `/setup` to link the bot to your server's roles.
+    ```
+    /setup verified_role:@Verified us_role:@Citizen eu_role:@European portal_channel:#verify
+    ```
+2.  **Post Portal**: Run `/portal` to post the verification panel to the channel you configured.
+    ```
+    /portal
+    ```
+3.  **Done!** Users can now verify themselves.
 
 1. Install dependencies:
    ```bash
@@ -53,9 +65,11 @@ ZKCord is a secure, privacy-first solution for Discord communities that need to 
    ```bash
    npm run bot
    ```
-4. Post the verification portal message to a channel:
+   ```
+4. Post the verification portal message:
    ```bash
-   npm run portal
+   # Use the slash command in Discord:
+   /portal
    ```
 
 ---
