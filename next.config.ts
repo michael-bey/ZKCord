@@ -42,32 +42,21 @@ const nextConfig: NextConfig = {
       asyncWebAssembly: true,
     };
 
-    // Use our custom buffer-shim which includes BigInt polyfills
-    const path = require('path');
-    const bufferShimPath = path.resolve(__dirname, 'src/lib/buffer-shim.ts');
-
-    config.resolve = config.resolve || {};
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      // All imports of 'buffer' should use our polyfilled version
-      buffer: bufferShimPath,
-      'buffer/': bufferShimPath,
-    };
-
-    // Provide Buffer globally for all modules including dynamically loaded chunks
-    // Use our shim so BigInt methods are available everywhere
+    // Provide Buffer globally using the standard buffer package
+    // The buffer-shim.ts import will patch the prototype at runtime
     const webpack = require('webpack');
     config.plugins = config.plugins || [];
     config.plugins.push(
       new webpack.ProvidePlugin({
-        Buffer: [bufferShimPath, 'Buffer'],
+        Buffer: ['buffer', 'Buffer'],
       })
     );
 
-    // Also set fallback to use our shim
+    // Set fallback for buffer
+    config.resolve = config.resolve || {};
     config.resolve.fallback = {
       ...config.resolve.fallback,
-      buffer: bufferShimPath,
+      buffer: require.resolve('buffer/'),
     };
 
     return config;
