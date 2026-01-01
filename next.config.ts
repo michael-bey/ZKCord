@@ -22,14 +22,9 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Turbopack configuration - CRITICAL for Buffer BigInt polyfill
-  // Use relative path from project root for Turbopack
-  turbopack: {
-    resolveAlias: {
-      // All imports of 'buffer' should use our polyfilled version
-      'buffer': './src/lib/buffer-shim.ts',
-    },
-  },
+  // Turbopack: Keep empty to use webpack for production builds
+  // Webpack handles Buffer polyfill correctly via ProvidePlugin below
+  turbopack: {},
 
   // Configure webpack to reduce build overhead
   webpack: (config, { isServer }) => {
