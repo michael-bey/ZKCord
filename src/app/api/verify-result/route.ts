@@ -121,16 +121,16 @@ export async function POST(req: NextRequest) {
         const effectiveEURoleId = guildConfig?.euRoleId || process.env.DISCORD_EU_ROLE_ID;
 
         // Rate limiting to prevent abuse
-        const { checkRateLimit } = await import('@/lib/rate-limit');
+        // const { checkRateLimit } = await import('@/lib/rate-limit');
         // TEMPORARY: Increased limit for debugging purposes (50 attempts / hour)
-        const rateLimit = await checkRateLimit(`result:${discordUserId}`, 50, 3600);
+        // const rateLimit = await checkRateLimit(`result:${discordUserId}`, 50, 3600);
 
-        if (!rateLimit.allowed) {
-            console.log(`⚠️ Rate limit exceeded for verification attempts: ${discordUserId}`);
-            return NextResponse.json({
-                error: `Too many verification attempts. Please try again in ${Math.ceil(rateLimit.resetInSeconds / 60)} minutes.`
-            }, { status: 429 });
-        }
+        // if (!rateLimit.allowed) {
+        //     console.log(`⚠️ Rate limit exceeded for verification attempts: ${discordUserId}`);
+        //     return NextResponse.json({
+        //         error: `Too many verification attempts. Please try again in ${Math.ceil(rateLimit.resetInSeconds / 60)} minutes.`
+        //     }, { status: 429 });
+        // }
 
         // =========================================
         // SERVER-SIDE PROOF VERIFICATION
