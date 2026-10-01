@@ -4,20 +4,14 @@ const nextConfig: NextConfig = {
   transpilePackages: ['buffer'],
 
   // Proof verification (only /api/verify) loads @aztec/bb.js and the v4 alias the SDK also uses at runtime.
-  // Ship their Node builds and the Linux x64 binary; the other platform binaries alone would blow the
-  // 250 MB function limit.
+  // Ship only their Node builds. Leaving out the native `bb` binaries (build/) matters twice: they would
+  // blow the 250 MB function limit, and when present bb.js runs them in preference to WASM, and they
+  // write their CRS cache to ./.bb-crs, which is read-only on Vercel. The WASM backend honors /tmp.
   outputFileTracingIncludes: {
-    '/api/verify': [
-      'node_modules/@aztec/bb.js*/package.json',
-      'node_modules/@aztec/bb.js*/dest/node*/**/*',
-      'node_modules/@aztec/bb.js*/build/amd64-linux/**/*',
-    ],
+    '/api/verify': ['node_modules/@aztec/bb.js*/package.json', 'node_modules/@aztec/bb.js*/dest/node*/**/*'],
   },
   outputFileTracingExcludes: {
-    '*': [
-      'node_modules/@aztec/bb.js*/dest/browser/**/*',
-      'node_modules/@aztec/bb.js*/build/{arm64-macos,amd64-macos,arm64-linux}/**/*',
-    ],
+    '*': ['node_modules/@aztec/bb.js*/dest/browser/**/*', 'node_modules/@aztec/bb.js*/build/**/*'],
   },
 
   // Builds use webpack (see package.json) so the browser bundle gets a global Buffer.
