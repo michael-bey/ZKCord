@@ -1,168 +1,77 @@
+// Discord option types
+const SUB_COMMAND = 1;
+const STRING = 3;
+const CHANNEL = 7;
+const ROLE = 8;
+
+const ADMIN = '8';
+const GUILD_ONLY = [0];
+
+const roleOption = { name: 'role', description: 'Role to give', type: ROLE, required: true };
+
 export const commands = [
-    {
-        name: 'verify',
-        description: 'Privately verify your age & nationality using ZK proofs — no ID upload required',
-        type: 1, // CHAT_INPUT
-    },
-    {
-        name: 'setup',
-        description: 'Configure ZKCord roles and channel (Admin only)',
-        type: 1, // CHAT_INPUT
-        default_member_permissions: '8', // ADMINISTRATOR
+  {
+    name: 'verify',
+    description: 'Verify your age and nationality with your passport',
+    contexts: GUILD_ONLY,
+  },
+  {
+    name: 'portal',
+    description: 'Post the verification button',
+    default_member_permissions: ADMIN,
+    contexts: GUILD_ONLY,
+    options: [
+      { name: 'channel', description: 'Where to post it (defaults to this channel)', type: CHANNEL, channel_types: [0] },
+    ],
+  },
+  {
+    name: 'roles',
+    description: 'Choose which roles verified members get',
+    default_member_permissions: ADMIN,
+    contexts: GUILD_ONLY,
+    options: [
+      { name: 'list', description: 'Show role rules', type: SUB_COMMAND },
+      { name: 'verified', description: 'Role for everyone who verifies', type: SUB_COMMAND, options: [roleOption] },
+      { name: 'adult', description: 'Role for members proven 18+', type: SUB_COMMAND, options: [roleOption] },
+      {
+        name: 'country',
+        description: 'Role for a nationality or region (EU, LATAM, ...)',
+        type: SUB_COMMAND,
         options: [
-            {
-                name: 'verified_role',
-                description: 'Role to give after verification',
-                type: 8, // ROLE
-                required: false,
-            },
-            {
-                name: 'us_role',
-                description: 'Role to give for US citizens',
-                type: 8, // ROLE
-                required: false,
-            },
-            {
-                name: 'eu_role',
-                description: 'Role to give for EU citizens',
-                type: 8, // ROLE
-                required: false,
-            },
-            {
-                name: 'portal_channel',
-                description: 'Channel to post the verify button',
-                type: 7, // CHANNEL
-                channel_types: [0], // GUILD_TEXT
-                required: false,
-            },
+          { name: 'place', description: 'Country or region', type: STRING, required: true, autocomplete: true },
+          roleOption,
         ],
-    },
-    {
-        name: 'portal',
-        description: 'Post the verification panel to the configured channel (Admin only)',
-        type: 1, // CHAT_INPUT
-        default_member_permissions: '8', // ADMINISTRATOR
-    },
-    {
-        name: 'add-country-role',
-        description: 'Link a specific country to a role (Admin only)',
-        type: 1, // CHAT_INPUT
-        default_member_permissions: '8', // ADMINISTRATOR
+      },
+      {
+        name: 'gender',
+        description: 'Role by passport gender marker',
+        type: SUB_COMMAND,
         options: [
-            {
-                name: 'country',
-                description: 'Country name (e.g. "France", "Brazil")',
-                type: 3, // STRING
-                required: true,
-            },
-            {
-                name: 'role',
-                description: 'Role to assign',
-                type: 8, // ROLE
-                required: true,
-            },
+          {
+            name: 'gender',
+            description: 'Gender marker',
+            type: STRING,
+            required: true,
+            choices: [
+              { name: 'Female', value: 'F' },
+              { name: 'Male', value: 'M' },
+            ],
+          },
+          roleOption,
         ],
-    },
-    {
-        name: 'remove-country-role',
-        description: 'Remove a country-role link (Admin only)',
-        type: 1, // CHAT_INPUT
-        default_member_permissions: '8', // ADMINISTRATOR
-        options: [
-            {
-                name: 'country',
-                description: 'Country name to remove',
-                type: 3, // STRING
-                required: true,
-            },
-        ],
-    },
-    {
-        name: 'list-roles',
-        description: 'List all configured country, gender, and age roles (Admin only)',
-        type: 1, // CHAT_INPUT
-        default_member_permissions: '8', // ADMINISTRATOR
-    },
-    {
-        name: 'add-gender-role',
-        description: 'Link a gender to a role (Admin only)',
-        type: 1, // CHAT_INPUT
-        default_member_permissions: '8', // ADMINISTRATOR
-        options: [
-            {
-                name: 'gender',
-                description: 'Gender to check',
-                type: 3, // STRING
-                required: true,
-                choices: [
-                    { name: 'Male', value: 'M' },
-                    { name: 'Female', value: 'F' },
-                ],
-            },
-            {
-                name: 'role',
-                description: 'Role to assign',
-                type: 8, // ROLE
-                required: true,
-            },
-        ],
-    },
-    {
-        name: 'remove-gender-role',
-        description: 'Remove a gender-role link (Admin only)',
-        type: 1, // CHAT_INPUT
-        default_member_permissions: '8', // ADMINISTRATOR
-        options: [
-            {
-                name: 'gender',
-                description: 'Gender to remove',
-                type: 3, // STRING
-                required: true,
-                choices: [
-                    { name: 'Male', value: 'M' },
-                    { name: 'Female', value: 'F' },
-                ],
-            },
-        ],
-    },
-    {
-        name: 'add-age-role',
-        description: 'Link minimum age to a role (Admin only)',
-        type: 1, // CHAT_INPUT
-        default_member_permissions: '8', // ADMINISTRATOR
-        options: [
-            {
-                name: 'minimum_age',
-                description: 'Minimum age required',
-                type: 4, // INTEGER
-                required: true,
-                choices: [
-                    { name: '18+', value: 18 },
-                ],
-            },
-            {
-                name: 'role',
-                description: 'Role to assign',
-                type: 8, // ROLE
-                required: true,
-            },
-        ],
-    },
-    {
-        name: 'remove-age-role',
-        description: 'Remove an age-role link (Admin only)',
-        type: 1, // CHAT_INPUT
-        default_member_permissions: '8', // ADMINISTRATOR
-        options: [
-            {
-                name: 'minimum_age',
-                description: 'Minimum age to remove',
-                type: 4, // INTEGER
-                required: true,
-                choices: [
-                    { name: '18+', value: 18 },
-                ],
-            },
-        ],
-    },
+      },
+      {
+        name: 'remove',
+        description: 'Remove a role rule',
+        type: SUB_COMMAND,
+        options: [{ name: 'rule', description: 'Rule to remove', type: STRING, required: true, autocomplete: true }],
+      },
+    ],
+  },
+  {
+    name: 'reset',
+    description: 'Take ZKCord roles back from everyone and forget their passports (for demos)',
+    default_member_permissions: ADMIN,
+    contexts: GUILD_ONLY,
+  },
 ];
