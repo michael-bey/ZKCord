@@ -1,5 +1,5 @@
 {
-  "name": "zkpassport-tg",
+  "name": "zkcord",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,24 +7,23 @@
     "build": "next build --webpack && npm run bot",
     "start": "next start",
     "lint": "eslint",
-    "bot": "tsx src/bot/index.ts"
+    "bot": "tsx src/bot/register.ts"
   },
   "dependencies": {
     "@upstash/redis": "^1.36.0",
     "@zkpassport/sdk": "^0.12.4",
+    "@zkpassport/utils": "^0.31.2",
     "buffer": "^6.0.3",
     "discord-interactions": "^4.4.0",
     "next": "16.1.1",
     "qrcode.react": "^4.2.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "uuid": "^13.0.0"
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tsx": "^4.21.0",

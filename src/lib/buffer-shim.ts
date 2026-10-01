@@ -1,7 +1,6 @@
-// Complete Buffer polyfill with BigInt methods for browser
+// The browser `buffer` package lacks Node's BigInt read/write methods, which @aztec/bb.js needs.
 import { Buffer as BaseBuffer } from 'buffer';
 
-// Extend Buffer prototype with missing BigInt methods
 if (typeof BaseBuffer.prototype.writeBigUInt64BE !== 'function') {
     BaseBuffer.prototype.writeBigUInt64BE = function (value: bigint, offset: number = 0): number {
         const hi = Number(value >> BigInt(32));
@@ -64,16 +63,8 @@ if (typeof BaseBuffer.prototype.readBigInt64LE !== 'function') {
     };
 }
 
-// Set globally so dynamic imports and lazy-loaded chunks get the polyfilled Buffer
-if (typeof globalThis !== 'undefined') {
-    (globalThis as any).Buffer = BaseBuffer;
-}
-if (typeof window !== 'undefined') {
-    (window as any).Buffer = BaseBuffer;
-}
-if (typeof global !== 'undefined') {
-    (global as any).Buffer = BaseBuffer;
-}
+// Expose globally so lazily loaded SDK chunks see the patched Buffer.
+(globalThis as { Buffer?: unknown }).Buffer = BaseBuffer;
 
 export { BaseBuffer as Buffer };
 export default BaseBuffer;

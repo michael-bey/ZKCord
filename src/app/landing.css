@@ -1,0 +1,421 @@
+.landing .wrap {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding-inline: clamp(16px, 4vw, 48px);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Cover: the passport-colored hero */
+
+.cover {
+  background: var(--cover);
+  color: var(--on-cover);
+  padding-bottom: clamp(3rem, 8vw, 6rem);
+}
+
+.cover .masthead {
+  padding-block: clamp(1rem, 2.5vw, 1.75rem);
+}
+
+.cover .button {
+  background: var(--on-cover);
+  border-color: var(--on-cover);
+  color: var(--cover);
+}
+
+.cover .button.secondary {
+  background: transparent;
+  color: var(--on-cover);
+}
+
+.cover .button:hover {
+  background: var(--redact);
+  border-color: var(--redact);
+  color: var(--on-cover);
+}
+
+.cover .actions {
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+}
+
+.cover-title {
+  max-width: 22ch;
+  margin-top: clamp(2rem, 6vw, 4.5rem);
+  font-size: clamp(1.375rem, 2.6vw, 2rem);
+  font-weight: 700;
+  font-stretch: 100%;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* The data page */
+
+.datapage {
+  margin-top: clamp(1.5rem, 4vw, 3rem);
+  border-top: 2px solid var(--on-cover);
+}
+
+.datapage-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) 1fr;
+  align-items: center;
+  gap: 0.25rem 1.5rem;
+  padding-block: clamp(0.4rem, 1vw, 0.75rem);
+  border-bottom: 1px solid color-mix(in oklch, var(--on-cover) 30%, transparent);
+}
+
+.datapage dt {
+  color: var(--on-cover-soft);
+  font-size: clamp(0.875rem, 1.3vw, 1.0625rem);
+  font-weight: 500;
+}
+
+.datapage dd {
+  font-size: clamp(2rem, 7.4vw, 5.75rem);
+  font-weight: 900;
+  font-stretch: 125%;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.redacted {
+  position: relative;
+  display: inline-block;
+}
+
+.redacted::after {
+  content: '';
+  position: absolute;
+  inset: 0.06em -0.06em -0.06em;
+  background: var(--redact);
+  transform-origin: left;
+  animation: redact 0.55s var(--ease-out) both;
+  animation-delay: calc(0.5s + var(--i) * 0.18s);
+}
+
+.datapage .role {
+  animation: reveal 0.6s var(--ease-out) both;
+  animation-delay: calc(0.75s + var(--i) * 0.18s);
+}
+
+@keyframes redact {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(0.15em); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 640px) {
+  .datapage-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Discord role pill, at any size */
+
+.role {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.12em 0.45em 0.12em 0.35em;
+  border-radius: 0.28em;
+  background: var(--discord);
+  color: var(--discord-text);
+  line-height: 1.1;
+}
+
+.role::before {
+  content: '';
+  width: 0.42em;
+  height: 0.42em;
+  border-radius: 50%;
+  background: var(--role);
+  flex: none;
+}
+
+/* How it works */
+
+.how {
+  padding-block: clamp(4rem, 10vw, 8rem);
+}
+
+.how h2 {
+  margin: 0 0 clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  font-stretch: 125%;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.scenes {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(2rem, 4vw, 3rem);
+  counter-reset: scene;
+}
+
+.scenes > li {
+  counter-increment: scene;
+}
+
+.scenes h3 {
+  margin-top: 1.5rem;
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.scenes h3::before {
+  content: counter(scene) '  ';
+  color: var(--stamp);
+  font-weight: 900;
+  font-stretch: 125%;
+  white-space: pre;
+}
+
+.scenes > li > p {
+  margin-top: 0.4rem;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 860px) {
+  .scenes {
+    grid-template-columns: 1fr;
+    max-width: 28rem;
+  }
+}
+
+.scene {
+  height: 15.5rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.scene.discord {
+  padding: 1.1rem;
+  background: var(--discord);
+  color: var(--discord-text);
+}
+
+.discord-author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.discord-avatar {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--on-cover);
+  color: var(--redact);
+}
+
+.discord-tag {
+  padding: 0 0.3rem;
+  border-radius: 3px;
+  background: var(--blurple);
+  color: var(--discord-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.discord-embed {
+  margin: 0.75rem 0 0 2.5rem;
+  padding: 0.7rem 0.85rem;
+  border-left: 4px solid var(--cover);
+  border-radius: 4px;
+  background: var(--discord-raised);
+}
+
+.discord-embed p {
+  margin-top: 0.3rem;
+  color: var(--discord-soft);
+}
+
+.discord-button,
+.phone-button {
+  display: inline-block;
+  margin: 0.75rem 0 0 2.5rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 4px;
+  background: var(--blurple);
+  color: var(--discord-text);
+  font-weight: 600;
+}
+
+.scene.phone {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+
+.phone-screen {
+  width: 13rem;
+  height: 13.5rem;
+  padding: 1.1rem 1rem 0;
+  border: 6px solid var(--ink);
+  border-bottom: 0;
+  border-radius: 1.6rem 1.6rem 0 0;
+  background: var(--paper);
+}
+
+.phone-title {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.phone-screen ul {
+  list-style: none;
+}
+
+.phone-screen li {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.phone-screen .ok::before {
+  content: '✓ ';
+  color: var(--stamp);
+  font-weight: 800;
+}
+
+.phone-screen .no {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+}
+
+.phone-button {
+  margin-left: 0;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.scene.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 0;
+  background:
+    linear-gradient(var(--cover) 0 4.25rem, transparent 0),
+    var(--discord);
+}
+
+.profile-avatar {
+  width: 4.5rem;
+  height: 4.5rem;
+  margin-top: 1.75rem;
+  border: 6px solid var(--discord);
+  border-radius: 50%;
+  background: var(--role-gold);
+}
+
+.profile-name {
+  margin-top: 0.4rem;
+  font-size: 1.125rem;
+}
+
+.profile-label {
+  margin-top: 0.75rem;
+  color: var(--discord-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.profile-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+  font-size: 0.875rem;
+}
+
+.profile-roles .role {
+  background: var(--discord-raised);
+}
+
+/* Statement */
+
+.statement {
+  background: var(--ink);
+  color: var(--paper);
+  padding-block: clamp(4rem, 10vw, 8rem);
+}
+
+.statement .wrap {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  align-items: end;
+  gap: 2rem clamp(2rem, 5vw, 4rem);
+}
+
+.statement-title {
+  font-size: clamp(2.75rem, 8vw, 6.5rem);
+  font-weight: 900;
+  font-stretch: 125%;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+}
+
+.statement-body {
+  color: color-mix(in oklch, var(--paper) 78%, var(--ink));
+  font-size: 1.125rem;
+  max-width: 32rem;
+}
+
+@media (max-width: 860px) {
+  .statement .wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Closer */
+
+.closer {
+  padding-top: clamp(4rem, 10vw, 8rem);
+}
+
+.closer-title {
+  margin: 0;
+  max-width: 14ch;
+  font-size: clamp(2.5rem, 7vw, 5.5rem);
+  font-weight: 900;
+  font-stretch: 125%;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.closer-note {
+  margin-top: 1.5rem;
+}
+
+.landing .colophon {
+  margin-top: clamp(4rem, 8vw, 6rem);
+  padding-bottom: 2rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redacted::after,
+  .datapage .role {
+    animation: none;
+  }
+}

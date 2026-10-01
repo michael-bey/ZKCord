@@ -1,59 +1,54 @@
-import React from 'react';
+import type { Metadata } from 'next';
+import { Colophon, Masthead } from '@/components/Chrome';
+
+export const metadata: Metadata = { title: 'ZKCord privacy policy' };
 
 export default function PrivacyPolicy() {
-    return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
-            <p className="mb-4 text-gray-600">Last updated: {new Date().toLocaleDateString()}</p>
+  return (
+    <div className="page">
+      <Masthead />
+      <main className="prose">
+        <h1>Privacy</h1>
+        <p className="lede">Last updated 30 September 2026.</p>
 
-            <div className="space-y-6">
-                <section>
-                    <h2 className="text-2xl font-semibold mb-3">1. Introduction</h2>
-                    <p>
-                        Welcome to ZKPassport. We respect your privacy and are committed to protecting your personal data.
-                        This privacy policy will inform you as to how we look after your personal data when you visit our website
-                        and tell you about your privacy rights and how the law protects you.
-                    </p>
-                </section>
+        <h2>What ZKCord never receives</h2>
+        <p>
+          Your passport is read by the ZKPassport app on your phone. ZKCord never receives your name, date of
+          birth, passport number, photo, or a copy of any document.
+        </p>
 
-                <section>
-                    <h2 className="text-2xl font-semibold mb-3">2. Data We Collect</h2>
-                    <p>
-                        We may collect, use, store and transfer different kinds of personal data about you which we have grouped together follows:
-                    </p>
-                    <ul className="list-disc ml-6 mt-2 space-y-1">
-                        <li>Identity Data includes first name, maiden name, last name, username or similar identifier.</li>
-                        <li>Contact Data includes billing address, delivery address, email address and telephone numbers.</li>
-                        <li>Technical Data includes internet protocol (IP) address, your login data, browser type and version, time zone setting and location, browser plug-in types and versions, operating system and platform and other technology on the devices you use to access this website.</li>
-                    </ul>
-                </section>
+        <h2>What ZKCord receives and keeps</h2>
+        <ul>
+          <li>
+            <strong>While you verify:</strong> your Discord user ID, display name and server ID, deleted after 10
+            minutes or as soon as you finish.
+          </li>
+          <li>
+            <strong>From the proof:</strong> that you are 18 or older, your nationality, and your gender marker if
+            the server uses gender roles. These are used to pick your roles and are not stored.
+          </li>
+          <li>
+            <strong>After you verify:</strong> a pairing of your Discord user ID with an anonymous passport
+            identifier, per server, so one passport can&apos;t verify several accounts. It can&apos;t be traced
+            back to your passport. Server admins can erase it with <code>/reset</code>.
+          </li>
+          <li>
+            <strong>Server settings:</strong> which roles a server gives for which rule.
+          </li>
+        </ul>
 
-                <section>
-                    <h2 className="text-2xl font-semibold mb-3">3. How We Use Your Data</h2>
-                    <p>
-                        We will only use your personal data when the law allows us to. Most commonly, we will use your personal data in the following circumstances:
-                    </p>
-                    <ul className="list-disc ml-6 mt-2 space-y-1">
-                        <li>Where we need to perform the contract we are about to enter into or have entered into with you.</li>
-                        <li>Where it is necessary for our legitimate interests (or those of a third party) and your interests and fundamental rights do not override those interests.</li>
-                        <li>Where we need to comply with a legal or regulatory obligation.</li>
-                    </ul>
-                </section>
+        <h2>Who else sees it</h2>
+        <p>
+          Discord sees the roles you are given. The data above is stored with Upstash (Redis) and the site is
+          hosted on Vercel. Nothing is sold or shared for advertising.
+        </p>
 
-                <section>
-                    <h2 className="text-2xl font-semibold mb-3">4. Data Security</h2>
-                    <p>
-                        We have put in place appropriate security measures to prevent your personal data from being accidentally lost, used or accessed in an unauthorized way, altered or disclosed.
-                    </p>
-                </section>
-
-                <section>
-                    <h2 className="text-2xl font-semibold mb-3">5. Contact Us</h2>
-                    <p>
-                        If you have any questions about this privacy policy or our privacy practices, please contact us.
-                    </p>
-                </section>
-            </div>
-        </div>
-    );
+        <h2>Deleting your data</h2>
+        <p>
+          Ask an admin of the server to run <code>/reset</code>, or contact the ZKCord maintainers on GitHub.
+        </p>
+      </main>
+      <Colophon />
+    </div>
+  );
 }
