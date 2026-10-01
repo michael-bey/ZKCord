@@ -3,10 +3,21 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   transpilePackages: ['buffer'],
 
-  // Server-side proof verification loads @aztec/bb.js (and the v4 alias the SDK also uses) WASM at runtime;
-  // make sure both ship with the functions.
+  // Proof verification (only /api/verify) loads @aztec/bb.js and the v4 alias the SDK also uses at runtime.
+  // Ship their Node builds and the Linux x64 binary; the other platform binaries alone would blow the
+  // 250 MB function limit.
   outputFileTracingIncludes: {
-    '/api/**/*': ['node_modules/@aztec/bb.js/**/*', 'node_modules/@aztec/bb.js-v4/**/*'],
+    '/api/verify': [
+      'node_modules/@aztec/bb.js*/package.json',
+      'node_modules/@aztec/bb.js*/dest/node*/**/*',
+      'node_modules/@aztec/bb.js*/build/amd64-linux/**/*',
+    ],
+  },
+  outputFileTracingExcludes: {
+    '*': [
+      'node_modules/@aztec/bb.js*/dest/browser/**/*',
+      'node_modules/@aztec/bb.js*/build/{arm64-macos,amd64-macos,arm64-linux}/**/*',
+    ],
   },
 
   // Builds use webpack (see package.json) so the browser bundle gets a global Buffer.
