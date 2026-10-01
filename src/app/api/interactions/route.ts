@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, after } from 'next/server';
 import { InteractionResponseType, InteractionType, verifyKey } from 'discord-interactions';
 import { APP_URL, DiscordError, editReply, postPortal, removeRole } from '@/lib/discord';
-import { COUNTRIES, REGIONS, describePlace } from '@/lib/regions';
+import { describePlace, searchPlaces } from '@/lib/regions';
 import {
   createSession,
   forgetVerifiedMembers,
@@ -150,17 +150,17 @@ async function autocomplete(interaction: Interaction) {
   let choices: { name: string; value: string }[];
   if (focused?.name === 'rule') {
     const rules = await getRoleRules(interaction.guild_id!);
-    choices = Object.keys(rules).map((rule) => ({ name: describeRule(rule), value: rule }));
+    choices = Object.keys(rules)
+      .map((rule) => ({ name: describeRule(rule), value: rule }))
+      .filter((c) => c.name.toLowerCase().includes(query))
+      .slice(0, 25);
   } else {
-    choices = [
-      ...Object.entries(REGIONS).map(([key, r]) => ({ name: `${r.label} (region)`, value: `region:${key}` })),
-      ...Object.entries(COUNTRIES).map(([code, name]) => ({ name, value: `country:${code}` })),
-    ];
+    choices = searchPlaces(query);
   }
 
   return NextResponse.json({
     type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
-    data: { choices: choices.filter((c) => c.name.toLowerCase().includes(query)).slice(0, 25) },
+    data: { choices },
   });
 }
 
