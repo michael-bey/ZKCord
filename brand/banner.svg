@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 480">
+  <rect width="1360" height="480" fill="#14213d"/>
+  <!-- A passport data page: three fields blacked out, two that come through as Discord roles -->
+  <rect x="560" y="70" width="700" height="340" rx="18" fill="#e7edf6"/>
+  <g fill="#c9d2e0">
+    <rect x="600" y="112" width="90" height="12" rx="3"/>
+    <rect x="600" y="172" width="120" height="12" rx="3"/>
+    <rect x="600" y="232" width="140" height="12" rx="3"/>
+    <rect x="600" y="292" width="110" height="12" rx="3"/>
+    <rect x="600" y="352" width="50" height="12" rx="3"/>
+  </g>
+  <g fill="#070b16">
+    <rect x="780" y="98" width="400" height="40"/>
+    <rect x="780" y="158" width="300" height="40"/>
+    <rect x="780" y="218" width="330" height="40"/>
+  </g>
+  <rect x="780" y="276" width="230" height="46" rx="10" fill="#2b2d31"/>
+  <circle cx="808" cy="299" r="9" fill="#57f287"/>
+  <rect x="830" y="292" width="160" height="14" rx="4" fill="#e6e7eb"/>
+  <rect x="780" y="336" width="140" height="46" rx="10" fill="#2b2d31"/>
+  <circle cx="808" cy="359" r="9" fill="#ffc72c"/>
+  <rect x="830" y="352" width="70" height="14" rx="4" fill="#e6e7eb"/>
+</svg>
