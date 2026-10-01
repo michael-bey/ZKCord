@@ -1,135 +1,157 @@
 import Link from 'next/link';
-import { Masthead, Colophon, INVITE_URL } from '@/components/Chrome';
+import { Colophon, INVITE_URL, Masthead } from '@/components/Chrome';
+import { Mark } from '@/components/Mark';
+import './landing.css';
 
-// ICAO 9303 specimen passport (the fictional state of Utopia).
-// Segments either stay visible, get blacked out, or get replaced by what the proof shows.
-type Segment = [text: string, kind?: 'keep' | 'proved'];
-const MRZ: Segment[][] = [
-  [['P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<']],
-  [['L898902C36'], ['UTO', 'keep'], ['740812', 'proved'], ['2F1204159ZE184226B<<<<<10']],
+// Rows of a passport data page. Hidden rows get blacked out; the rest become Discord roles.
+const DATA_PAGE = [
+  { label: 'Name', value: 'Anna Eriksson' },
+  { label: 'Date of birth', value: '12.08.1974' },
+  { label: 'Passport number', value: 'L898902C3' },
+  { label: 'Nationality', role: 'France', color: 'var(--role-green)' },
+  { label: 'Age', role: '18+', color: 'var(--role-gold)' },
 ];
 
-function Mrz() {
-  let i = 0;
+function RolePill({ name, color }: { name: string; color: string }) {
   return (
-    <figure className="mrz">
-      <p className="mrz-label">Your member&apos;s phone reads</p>
-      <div className="mrz-lines">
-        {MRZ.map((line, n) => (
-          <div key={n}>{line.map(([text]) => text).join('')}</div>
-        ))}
-      </div>
-      <p className="mrz-label">Your server gets</p>
-      <div
-        className="mrz-lines"
-        role="img"
-        aria-label="The same lines with everything blacked out except the nationality, UTO, and a mark showing the holder is 18 or older."
-      >
-        {MRZ.map((line, n) => (
-          <div key={n} aria-hidden="true">
-            {line.map(([text, kind]) => (
-              <span key={text} className={kind ?? 'hide'} style={{ '--i': i++ } as React.CSSProperties}>
-                {text}
-              </span>
-            ))}
+    <span className="role" style={{ '--role': color } as React.CSSProperties}>
+      {name}
+    </span>
+  );
+}
+
+function DataPage() {
+  return (
+    <>
+      <p className="sr-only">
+        A passport data page where the name, date of birth and passport number are blacked out. Only the
+        nationality, France, and the age, 18 or older, come through, as Discord roles.
+      </p>
+      <dl className="datapage" aria-hidden="true">
+        {DATA_PAGE.map((row, i) => (
+          <div key={row.label} className="datapage-row" style={{ '--i': i } as React.CSSProperties}>
+            <dt>{row.label}</dt>
+            <dd>
+              {row.role ? <RolePill name={row.role} color={row.color} /> : <span className="redacted">{row.value}</span>}
+            </dd>
           </div>
         ))}
+      </dl>
+    </>
+  );
+}
+
+function DiscordScene() {
+  return (
+    <div className="scene discord" aria-hidden="true">
+      <div className="discord-author">
+        <span className="discord-avatar"><Mark size={18} /></span>
+        <strong>ZKCord</strong>
+        <span className="discord-tag">App</span>
       </div>
-      <figcaption>
-        The machine-readable lines from a specimen passport. Nationality and a proof of being 18 or older reach
-        your server. Everything else stays on the phone.
-      </figcaption>
-    </figure>
+      <div className="discord-embed">
+        <strong>Verify to get your roles</strong>
+        <p>Prove your age and nationality with your passport, without showing it to anyone.</p>
+      </div>
+      <span className="discord-button">Start verification</span>
+    </div>
+  );
+}
+
+function PhoneScene() {
+  return (
+    <div className="scene phone" aria-hidden="true">
+      <div className="phone-screen">
+        <p className="phone-title">ZKCord asks for</p>
+        <ul>
+          <li className="ok">You are 18 or older</li>
+          <li className="ok">Your nationality</li>
+          <li className="no">Your name</li>
+          <li className="no">Your photo</li>
+        </ul>
+        <span className="phone-button">Share proof</span>
+      </div>
+    </div>
+  );
+}
+
+function ProfileScene() {
+  return (
+    <div className="scene discord profile" aria-hidden="true">
+      <span className="profile-avatar" />
+      <strong className="profile-name">anna</strong>
+      <p className="profile-label">Roles</p>
+      <div className="profile-roles">
+        <RolePill name="Verified" color="var(--blurple)" />
+        <RolePill name="France" color="var(--role-green)" />
+        <RolePill name="18+" color="var(--role-gold)" />
+      </div>
+    </div>
   );
 }
 
 export default function Home() {
   return (
-    <div className="page">
-      <Masthead />
+    <div className="landing">
+      <section className="cover">
+        <div className="wrap">
+          <Masthead />
+          <h1 className="cover-title">Discord roles from a passport. Without the passport.</h1>
+          <DataPage />
+          <div className="actions">
+            <a className="button" href={INVITE_URL}>Add to Discord</a>
+            <a className="button secondary" href="#how">See how it works</a>
+          </div>
+        </div>
+      </section>
 
-      <main>
-        <h1>Verify members by passport. See only what you need.</h1>
-        <p className="lede">
-          ZKCord gives Discord roles based on age and nationality. Members scan their passport with the
-          ZKPassport app, and your server gets a cryptographic proof instead of a copy of the document.
-        </p>
+      <section className="how wrap" id="how">
+        <h2>Three steps, about a minute</h2>
+        <ol className="scenes">
+          <li>
+            <DiscordScene />
+            <h3>Click Start verification in Discord</h3>
+            <p>Members get a private link that only works for their account.</p>
+          </li>
+          <li>
+            <PhoneScene />
+            <h3>Scan the passport chip in ZKPassport</h3>
+            <p>The phone checks the government signature and proves only what the server asks for.</p>
+          </li>
+          <li>
+            <ProfileScene />
+            <h3>Roles show up</h3>
+            <p>ZKCord checks the proof again on its server, then gives the roles you picked.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section className="statement">
+        <div className="wrap">
+          <p className="statement-title">One passport. One account.</p>
+          <div className="statement-body">
+            <p>
+              Every proof carries an anonymous identifier that stays the same for the same passport. If someone
+              tries to verify a second account in your server with it, ZKCord says no.
+            </p>
+            <p>Expired passports and passports from sanctioned countries can&apos;t verify.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="closer wrap">
+        <h2 className="closer-title">Add ZKCord to your server.</h2>
         <div className="actions">
           <a className="button" href={INVITE_URL}>Add to Discord</a>
           <Link className="button secondary" href="/admin-guide">Read the setup guide</Link>
         </div>
-
-        <Mrz />
-
-        <h2>How verification works</h2>
-        <ol className="steps">
-          <li>
-            <h3>A member clicks Start verification in Discord</h3>
-            <p className="quiet">They get a private link that only works for their account and expires in 10 minutes.</p>
-          </li>
-          <li>
-            <h3>Their phone reads the passport chip</h3>
-            <p className="quiet">
-              The ZKPassport app checks the government signature on the chip and builds a proof of only the facts
-              your server asks for.
-            </p>
-          </li>
-          <li>
-            <h3>ZKCord checks the proof and gives roles</h3>
-            <p className="quiet">
-              The proof is verified again on our server, so a modified app can&apos;t fake it. Roles appear in
-              Discord a few seconds later.
-            </p>
-          </li>
-        </ol>
-
-        <h2>What your server learns</h2>
-        <div className="ledger">
-          <div>
-            <h3>Shared</h3>
-            <ul>
-              <li>Holder is 18 or older</li>
-              <li>Nationality</li>
-              <li>Gender marker, only if you set up gender roles</li>
-              <li>Whether this passport already verified another account here</li>
-            </ul>
-          </div>
-          <div className="withheld">
-            <h3>Never shared</h3>
-            <ul>
-              <li>Name</li>
-              <li>Date of birth</li>
-              <li>Passport number</li>
-              <li>Photo</li>
-            </ul>
-          </div>
-        </div>
-
-        <h2>One passport, one account</h2>
-        <div className="prose">
-          <p>
-            Each proof carries an identifier that is the same every time a passport verifies with ZKCord, but
-            can&apos;t be traced back to the passport. If someone tries to verify a second Discord account with
-            the same passport, ZKCord refuses.
-          </p>
-          <p>
-            Passports from sanctioned countries and expired passports can&apos;t verify.
-          </p>
-        </div>
-
-        <h2>For members</h2>
-        <div className="prose">
-          <p>
-            You need a passport with a chip (look for the chip symbol on the cover) and the free ZKPassport app.
-          </p>
-          <div className="actions">
-            <a className="button secondary small" href="https://apps.apple.com/us/app/zkpassport/id6477371975">ZKPassport for iPhone</a>
-            <a className="button secondary small" href="https://play.google.com/store/apps/details?id=app.zkpassport.zkpassport">ZKPassport for Android</a>
-          </div>
-        </div>
-      </main>
-
-      <Colophon />
+        <p className="quiet closer-note">
+          Members need a chipped passport and the free ZKPassport app for{' '}
+          <a href="https://apps.apple.com/us/app/zkpassport/id6477371975">iPhone</a> or{' '}
+          <a href="https://play.google.com/store/apps/details?id=app.zkpassport.zkpassport">Android</a>.
+        </p>
+        <Colophon />
+      </section>
     </div>
   );
 }

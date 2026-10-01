@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { IBM_Plex_Mono, Public_Sans } from 'next/font/google';
+import { Archivo, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 
-const sans = Public_Sans({ variable: '--font-sans', subsets: ['latin'] });
+const sans = Archivo({ variable: '--font-sans', subsets: ['latin'], axes: ['wdth'] });
 const mono = IBM_Plex_Mono({ variable: '--font-mono', subsets: ['latin'], weight: ['400', '600'] });
 
 export const metadata: Metadata = {
