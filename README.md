@@ -1,54 +1,66 @@
 # ZKCord
 
-A Discord bot that gives roles based on passport age and nationality. Members scan their passport with the
-[ZKPassport](https://zkpassport.id) app; ZKCord receives a zero-knowledge proof, checks it on the server, and
-assigns roles. It never sees the passport itself.
+A Discord bot that gives members roles based on their passport (18+, nationality, or a region like the EU)
+without anyone seeing the passport.
 
-Live at https://zkcord.vercel.app. Admin docs are at [/admin-guide](https://zkcord.vercel.app/admin-guide).
+Members scan their passport chip with the free [ZKPassport](https://zkpassport.id) app. Their phone produces a
+zero-knowledge proof of only the facts the server asked for, ZKCord checks the proof, and the roles appear.
+
+**Use it:** [add the hosted bot](https://zkcord.vercel.app) to your server and follow the
+[setup guide](https://zkcord.vercel.app/admin-guide). **Run your own:** see [Self-hosting](https://github.com/michael-bey/ZKCord/wiki/Self-hosting).
+
+## What a server learns
+
+| Shared with the server | Never leaves the member's phone |
+| --- | --- |
+| Holder is 18 or older | Name |
+| Nationality | Date of birth |
+| Gender marker, only if the server has gender roles | Passport number |
+| Whether this passport already verified another account in the server | Photo |
+
+Expired passports and passports from sanctioned countries can't verify. Details, including what ZKCord stores
+and what the operator of an instance can see: [How verification works](https://github.com/michael-bey/ZKCord/wiki/How-verification-works).
 
 ## Commands
 
-| Command | Who | What it does |
+| Command | Who | |
 | --- | --- | --- |
-| `/verify` | Members | Sends a private verification link |
-| `/portal [channel]` | Admins | Posts the Start verification button |
-| `/roles verified\|adult\|country\|gender\|list\|remove` | Admins | Maps proven facts to roles |
-| `/reset` | Admins | Takes ZKCord roles back from everyone and forgets their passports, for demos |
+| `/verify` | Members | Get a private verification link |
+| `/portal [channel]` | Admins | Post a Start verification button |
+| `/roles verified\|adult\|country\|gender` | Admins | Choose which role each proven fact gives |
+| `/roles list`, `/roles remove` | Admins | See or delete role rules |
+| `/reset` | Admins | Take back every ZKCord role and forget passports, for demos |
 
-## Running locally
+More in [Commands](https://github.com/michael-bey/ZKCord/wiki/Commands).
+
+## Development
+
+Next.js 16 on Vercel, Upstash Redis for state, the ZKPassport SDK for proofs.
 
 ```bash
 npm install
-vercel link && vercel env pull   # Discord credentials + KV_REST_API_* for Upstash Redis
+vercel link && vercel env pull   # or copy .env.example to .env.local and fill it in
 npm run dev
 ```
 
-Point the Discord application's Interactions Endpoint URL at `https://<host>/api/interactions` (use a tunnel
-for local work). `npm run build` registers slash commands after building, as does `npm run bot`.
+Discord has to reach `/api/interactions` over HTTPS, so local bot testing needs a tunnel. `npm run build`
+registers the slash commands after building. The [Self-hosting](https://github.com/michael-bey/ZKCord/wiki/Self-hosting)
+page covers the Discord application setup and every environment variable.
 
-## Environment
+```
+src/app/api/interactions   Discord slash commands, buttons and autocomplete
+src/app/api/verify         Checks proofs and gives roles
+src/app/verify             The page members open to scan their passport
+src/lib/query.ts           What ZKCord asks a passport for (shared by browser and server)
+src/lib/store.ts           Everything kept in Redis
+src/lib/regions.ts         Countries, regions, and passport code quirks
+```
 
-| Variable | |
-| --- | --- |
-| `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_PUBLIC_KEY` | From the Discord developer portal |
-| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Upstash Redis, provisioned through the Vercel Marketplace |
-| `NEXT_PUBLIC_APP_URL` | Public URL of the site. Also the domain ZKPassport proofs are bound to |
+## Contributing
 
-## How it fits together
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems
+privately, as described in [SECURITY.md](SECURITY.md).
 
-- `src/app/api/interactions` handles every Discord interaction. `/reset` replies right away and does the
-  work afterwards with `after()`, since Discord allows 3 seconds.
-- `src/app/verify` is the page members open. It builds the ZKPassport request in the browser.
-- `src/app/api/verify` re-verifies the proofs with the SDK (never trust the browser), enforces one passport
-  per account per server, and grants roles.
-- `src/lib/store.ts` holds everything kept in Redis: 10-minute sessions, role rules, and verified members.
+## License
 
-## Gotchas
-
-- **Buffer.** `@aztec/bb.js` (used by the ZKPassport SDK) calls Node's BigInt `Buffer` methods, which the
-  browser `buffer` package lacks. `src/lib/buffer-shim.ts` adds them and must be imported before the SDK.
-  Builds use webpack (`next build --webpack`) so `ProvidePlugin` can inject `Buffer`.
-- **WASM on Vercel.** `outputFileTracingIncludes` in `next.config.ts` forces `@aztec/bb.js` into the
-  function bundle so server-side verification can load it.
-- **Nationality format.** The proof discloses an ICAO alpha-3 code (`FRA`, or `D<<` for Germany), not a
-  country name. `src/lib/regions.ts` normalizes it.
+[MIT](LICENSE)
