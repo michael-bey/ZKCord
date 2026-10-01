@@ -97,10 +97,11 @@ export default function Home() {
         <div className="wrap">
           <Masthead />
           <h1 className="cover-title">Discord roles from a passport. Without the passport.</h1>
+          <p className="cover-sub">You pick the roles: Verified, 18+, a country, or a region like the EU.</p>
           <DataPage />
           <div className="actions">
             <a className="button" href={INVITE_URL}>Add to Discord</a>
-            <a className="button secondary" href="#how">See how it works</a>
+            <Link className="button secondary" href="/admin-guide">Read the setup guide</Link>
           </div>
         </div>
       </section>
@@ -115,7 +116,7 @@ export default function Home() {
           </li>
           <li>
             <PhoneScene />
-            <h3>Scan the passport chip in ZKPassport</h3>
+            <h3>Scan the passport in the free ZKPassport app</h3>
             <p>The phone checks the government signature and proves only what the server asks for.</p>
           </li>
           <li>
