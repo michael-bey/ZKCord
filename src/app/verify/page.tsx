@@ -38,49 +38,53 @@ function Verify() {
   async function start(askGender: boolean) {
     setState({ step: 'loading' });
     try {
-      const { ZKPassport, SANCTIONED_COUNTRIES } = await import('@zkpassport/sdk');
+      // Loaded on demand: the SDK is large and needs the Buffer shim in place first.
+      const [{ ZKPassport }, { SCOPE, zkcordQuery }] = await Promise.all([
+        import('@zkpassport/sdk'),
+        import('@/lib/query'),
+      ]);
       const zkPassport = new ZKPassport(window.location.host);
       const request = await zkPassport.request({
         name: 'ZKCord',
         logo: `${window.location.origin}/logo.png`,
         purpose: 'Prove your age and nationality to get roles in a Discord server.',
-        scope: 'zkcord-verification',
+        scope: SCOPE,
       });
 
-      let query = request
-        .gte('age', 18)
-        .gte('expiry_date', new Date())
-        .out('nationality', SANCTIONED_COUNTRIES)
-        .disclose('nationality');
-      if (askGender) query = query.disclose('gender');
-
-      const { url, onRequestReceived, onGeneratingProof, onProofGenerated, onReject, onError, onResult } = query.done();
-      const proofs: unknown[] = [];
+      const expiryAfter = new Date();
+      const { url, onRequestReceived, onGeneratingProof, onReject, onError, onSuccess } = zkcordQuery(request, {
+        expiryAfter,
+        askGender,
+      }).done();
 
       onRequestReceived(() => setState({ step: 'scanned' }));
       onGeneratingProof(() => setState({ step: 'proving' }));
-      onProofGenerated((proof) => proofs.push(proof));
       onReject(() => setState({ step: 'error', message: 'You declined the request in ZKPassport.' }));
       onError((err) => {
         console.error(err);
         setState({ step: 'error', message: 'ZKPassport reported an error. Try again from Discord.' });
       });
-      onResult(async ({ verified, result }) => {
-        if (!verified) {
-          setState({ step: 'error', message: "Your phone couldn't prove the request. Check that your passport hasn't expired." });
-          return;
-        }
+      // Returning false tells the ZKPassport app to show an error too.
+      onSuccess(async ({ proofs, result }) => {
         setState({ step: 'checking' });
         try {
           const res = await fetch('/api/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ session: sessionId, proofs, queryResult: result }),
+            body: JSON.stringify({
+              session: sessionId,
+              proofs,
+              queryResult: result,
+              expiryAfter: expiryAfter.toISOString(),
+              askGender,
+            }),
           });
           const body = await res.json();
           setState(res.ok ? { step: 'done', ...body } : { step: 'error', message: body.error });
+          return res.ok;
         } catch {
           setState({ step: 'error', message: "Couldn't reach ZKCord. Run /verify in Discord to try again." });
+          return false;
         }
       });
 

@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@upstash/redis": "^1.36.0",
-    "@zkpassport/sdk": "^0.12.4",
-    "@zkpassport/utils": "^0.31.2",
+    "@zkpassport/sdk": "^0.17.1",
+    "@zkpassport/utils": "^0.38.0",
     "buffer": "^6.0.3",
     "discord-interactions": "^4.4.0",
     "next": "16.1.1",

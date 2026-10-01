@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ZKPassport, type ProofResult, type QueryResult } from '@zkpassport/sdk';
 import { APP_URL, DiscordError, addRole } from '@/lib/discord';
 import { normalizeCountryCode, regionsFor } from '@/lib/regions';
+import { SCOPE, zkcordQuery } from '@/lib/query';
 import { claimPassport, consumeSession, getRoleRules, rateLimit } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
@@ -13,12 +14,20 @@ export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin');
   if (origin && new URL(origin).host !== appHost) return fail('Wrong origin.', 403);
 
-  const { session: sessionId, proofs, queryResult } = (await req.json().catch(() => ({}))) as {
+  const { session: sessionId, proofs, queryResult, expiryAfter, askGender } = (await req.json().catch(() => ({}))) as {
     session?: string;
     proofs?: ProofResult[];
     queryResult?: QueryResult;
+    expiryAfter?: string;
+    askGender?: boolean;
   };
-  if (!sessionId || !proofs?.length || !queryResult) return fail('Incomplete request.');
+  if (!sessionId || !proofs?.length || !queryResult || !expiryAfter) return fail('Incomplete request.');
+
+  // The expiry cutoff is part of the query, so the browser tells us which one it used.
+  // Only accept a recent one, so an old request can't be replayed against an expired passport.
+  const cutoff = new Date(expiryAfter);
+  const age = Date.now() - cutoff.getTime();
+  if (Number.isNaN(age) || age < -5 * 60_000 || age > 24 * 3600_000) return fail('This request is too old. Start again from Discord.');
 
   const session = await consumeSession(sessionId);
   if (!session) return fail('This link has expired. Run /verify in Discord for a new one.');
@@ -28,10 +37,13 @@ export async function POST(req: NextRequest) {
   if (wait) return fail(`Too many attempts. Try again in ${Math.ceil(wait / 60)} minutes.`, 429);
 
   // Never trust the browser's verdict: check the proofs here.
-  const { verified, uniqueIdentifier, queryResultErrors } = await new ZKPassport(appHost).verify({
+  const zkPassport = new ZKPassport(appHost);
+  const originalQuery = zkcordQuery(zkPassport.createQuery(), { expiryAfter: cutoff, askGender: !!askGender }).done().query;
+  const { verified, uniqueIdentifier, queryResultErrors } = await zkPassport.verify({
     proofs,
+    originalQuery,
     queryResult,
-    scope: 'zkcord-verification',
+    scope: SCOPE,
     writingDirectory: '/tmp',
   });
   if (!verified || !uniqueIdentifier) {
