@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { Mark } from './Mark';
 
-export const INVITE_URL =
-  'https://discord.com/api/oauth2/authorize?client_id=1456016871017943112&permissions=268435456&scope=bot%20applications.commands';
+// Bot + slash commands, with Manage Roles (268435456), the only permission ZKCord needs.
+export const INVITE_URL = `https://discord.com/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID}&permissions=268435456&scope=bot+applications.commands`;
 
 export function Masthead({ invite = true }: { invite?: boolean }) {
   return (
