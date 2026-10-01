@@ -26,9 +26,9 @@
 }
 
 .cover .button {
-  background: var(--on-cover);
-  border-color: var(--on-cover);
-  color: var(--cover);
+  background: var(--signal);
+  border-color: var(--signal);
+  color: var(--on-signal);
 }
 
 .cover .button.secondary {
@@ -37,9 +37,9 @@
 }
 
 .cover .button:hover {
-  background: var(--redact);
-  border-color: var(--redact);
-  color: var(--on-cover);
+  background: var(--on-cover);
+  border-color: var(--on-cover);
+  color: var(--cover);
 }
 
 .cover .actions {
@@ -179,11 +179,18 @@
 }
 
 .scenes h3::before {
-  content: counter(scene) '  ';
-  color: var(--stamp);
+  content: counter(scene);
+  display: inline-grid;
+  place-items: center;
+  width: 1.6em;
+  height: 1.6em;
+  margin-right: 0.5em;
+  border-radius: 4px;
+  background: var(--signal);
+  color: var(--on-signal);
   font-weight: 900;
   font-stretch: 125%;
-  white-space: pre;
+  vertical-align: 0.05em;
 }
 
 .scenes > li > p {
@@ -239,7 +246,7 @@
 .discord-embed {
   margin: 0.75rem 0 0 2.5rem;
   padding: 0.7rem 0.85rem;
-  border-left: 4px solid var(--cover);
+  border-left: 4px solid var(--signal);
   border-radius: 4px;
   background: var(--discord-raised);
 }

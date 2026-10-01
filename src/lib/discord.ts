@@ -66,7 +66,7 @@ export function postPortal(channelId: string) {
             'Your phone reads the passport chip and sends back a zero-knowledge proof. ' +
             'The server learns that you are 18+, your nationality, and your gender only if it uses gender roles. ' +
             'Not your name, photo, or passport number.',
-          color: 0xe8e4da,
+          color: 0xffc72c,
           fields: [{ name: 'You need', value: 'An NFC passport and the ZKPassport app' }],
         },
       ],
